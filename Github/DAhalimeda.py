@@ -10,8 +10,8 @@ from tensorflow.keras.utils import load_img
 
 
 
-DG_folder='C:/Users/tomas/Documents/TFG/TFG_Images/IMGs_SelectionOfImages/SubSelection_GoodFor_Segmentation/DA_NotDetailedIMGs/halimeda_train/images'
-DG_folder1='C:/Users/tomas/Documents/TFG/TFG_Images/IMGs_SelectionOfImages/SubSelection_GoodFor_Segmentation/DA_NotDetailedIMGs/halimeda_train/masks'
+DG_folder='C:/Documents/TFG/TFG_Images/IMGs_SelectionOfImages/SubSelection_GoodFor_Segmentation/DA_NotDetailedIMGs/halimeda_train/images'
+DG_folder1='C:/Documents/TFG/TFG_Images/IMGs_SelectionOfImages/SubSelection_GoodFor_Segmentation/DA_NotDetailedIMGs/halimeda_train/masks'
 images_increased = 5
 
 try:
