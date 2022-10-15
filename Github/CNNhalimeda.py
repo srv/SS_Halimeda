@@ -1,81 +1,244 @@
-import tensorflow 
-import os
 import numpy as np
-import cv2
-from keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.utils import load_img
+import tensorflow as tf
+import os
+import random
+import cv2 #pip install opencv-python
+ 
+from tqdm import tqdm 
 
-from tensorflow.keras.utils import load_img
-from tensorflow.keras.utils import img_to_array
-
+from skimage.io import imread, imshow
+from skimage.transform import resize
 import matplotlib.pyplot as plt
 
+seed = 42
+np.random.seed = seed
 
-DG_folder='C:/Users/person/Documents/FDR_Images/DA_Images/halimeda_train/images'
-DG_folder1='C:/Users/person/Documents/FDR_Images/DA_Images/halimeda_train/masks'
-images_increased = 5
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
+IMG_CHANNELS = 3
 
-try:
-    os.mkdir(DG_folder)
-    os.mkdir(DG_folder1)
-except:
-    print("")
+TRAIN_images_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_train/images/"
+TRAIN_masks_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_train/masks/"
+TEST_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_test/"
 
+train_images_list = os.listdir(TRAIN_images_PATH)
+train_masks_list = os.listdir(TRAIN_masks_PATH)
+test_list = os.listdir(TEST_PATH)
 
-train_datagen = ImageDataGenerator(
-    rotation_range=20,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='reflect')
+# train images
+X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+#sizes_test = []
+print('Resizing train images') 
+for n, id_ in tqdm(enumerate(train_images_list), total=len(train_images_list)):
+    path = TRAIN_images_PATH + id_
+    img = imread(path)[:,:,:IMG_CHANNELS]
+    #sizes_test.append([img.shape[0], img.shape[1]])
+    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    X_train[n] = img
 
+# masks images
+Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
+#sizes_test = []
+print('Resizing masks images') 
+for n, id_ in tqdm(enumerate(train_masks_list), total=len(train_masks_list)):
+    path = TRAIN_masks_PATH + id_
+    mask = imread(path)[:,:,:1]
+    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+    Y_train[n] = mask
 
-data_path = "C:/Users/person/Documents/FDR_Images/halimeda_train/images" 
-mask_path = "C:/Users/person/Documents/FDR_Images/halimeda_train/masks" 
-
-data_dir_list = os.listdir(data_path)
-
-
-width_shape, height_shape = 1024,1024
-
-i=0
-num_images=0
-for image_file in data_dir_list:
-    img_list=os.listdir(data_path)
-    print(image_file)
-
-    img_path = data_path + '/'+ image_file
-    mask_file = mask_path + '/gt_'+image_file
     
-    imge=load_img(img_path)
-    mask=load_img(mask_file)
-    
-    imge=cv2.resize(tensorflow.keras.utils.img_to_array(imge), (width_shape, height_shape), interpolation = cv2.INTER_AREA)
-    mask=cv2.resize(tensorflow.keras.utils.img_to_array(mask), (width_shape, height_shape), interpolation = cv2.INTER_AREA)
+# test images
+X_test = np.zeros((len(test_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+sizes_test = []
+print('Resizing test images') 
+for n, id_ in tqdm(enumerate(test_list), total=len(test_list)):
+    path = TEST_PATH + id_
+    img = imread(path)[:,:,:IMG_CHANNELS]
+    sizes_test.append([img.shape[0], img.shape[1]])
+    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    X_test[n] = img
 
-    x= imge/255
-    y= mask/255
+print('Done!')
+print('Xtrain:',X_train.shape)
+print('Ytrain:',Y_train.shape)
+print('Xtest:',X_test.shape)
 
-    x=np.expand_dims(x,axis=0)
-    y=np.expand_dims(y,axis=0)
-    t=1
-    for output_batch_img, output_batch_mask in zip(train_datagen.flow(x,batch_size=1), train_datagen.flow(y,batch_size=1)):
-        a=tensorflow.keras.utils.img_to_array(output_batch_img[0])
-        imagen=output_batch_img[0,:,:]*255
-        imgfinal = cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(DG_folder+"/%i%i.jpg"%(i,t), imgfinal)
-        
-        b=tensorflow.keras.utils.img_to_array(output_batch_mask[0])
-        imagen1=output_batch_mask[0,:,:]*255
-        imgfinal1 = cv2.cvtColor(imagen1, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(DG_folder1+"/gt_%i%i.jpg"%(i,t), imgfinal1)
-        t+=1
-        
-        num_images+=1
-        if t>images_increased:
-            break
-    i+=1
-    
-print("images generated",num_images)
+
+
+#Build the model
+inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
+s = tf.keras.layers.Lambda(lambda x: x / 255)(inputs)
+
+#Contraction path
+c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(s)
+c1 = tf.keras.layers.Dropout(0.1)(c1)
+c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1)
+p1 = tf.keras.layers.MaxPooling2D((2, 2))(c1)
+
+c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
+c2 = tf.keras.layers.Dropout(0.1)(c2)
+c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2)
+p2 = tf.keras.layers.MaxPooling2D((2, 2))(c2)
+ 
+c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
+c3 = tf.keras.layers.Dropout(0.2)(c3)
+c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3)
+p3 = tf.keras.layers.MaxPooling2D((2, 2))(c3)
+ 
+c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
+c4 = tf.keras.layers.Dropout(0.2)(c4)
+c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4)
+p4 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(c4)
+ 
+c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
+c5 = tf.keras.layers.Dropout(0.3)(c5)
+c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5)
+
+#Expansive path 
+u6 = tf.keras.layers.Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c5)
+u6 = tf.keras.layers.concatenate([u6, c4])
+c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
+c6 = tf.keras.layers.Dropout(0.2)(c6)
+c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6)
+ 
+u7 = tf.keras.layers.Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c6)
+u7 = tf.keras.layers.concatenate([u7, c3])
+c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
+c7 = tf.keras.layers.Dropout(0.2)(c7)
+c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7)
+ 
+u8 = tf.keras.layers.Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c7)
+u8 = tf.keras.layers.concatenate([u8, c2])
+c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
+c8 = tf.keras.layers.Dropout(0.1)(c8)
+c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8)
+ 
+u9 = tf.keras.layers.Conv2DTranspose(16, (2, 2), strides=(2, 2), padding='same')(c8)
+u9 = tf.keras.layers.concatenate([u9, c1], axis=3)
+c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
+c9 = tf.keras.layers.Dropout(0.1)(c9)
+c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9)
+outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary activation output
+#outputs = tf.keras.layers.Conv2D(1, (1, 1), activation='sigmoid')(c9)
+ 
+model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
+opt = tf.keras.optimizers.Adam(learning_rate=1e-6)
+model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
+#model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
+model.summary()
+
+################################
+#Modelcheckpoint
+checkpointer = tf.keras.callbacks.ModelCheckpoint('model_for_nuclei.h5', verbose=1, save_best_only=True)
+
+callbacks = [
+        tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'),
+        tf.keras.callbacks.TensorBoard(log_dir='logs')]
+
+results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=16, epochs=1500, callbacks=callbacks)
+
+####################################
+#plot metrics
+plt.plot(results.history['mse'])
+plt.title('mse')
+plt.show()
+plt.plot(results.history['mae'])
+plt.title('mae')
+plt.show()
+plt.plot(results.history['mape'])
+plt.title('mape')
+plt.show()
+
+
+plt.plot(results.history['loss'])#train_loss
+plt.title('train_loss')
+plt.show()
+plt.plot(results.history['val_loss'])
+plt.title('val_loss')
+plt.show()
+plt.plot(results.history['accuracy'])
+plt.title('train_accuracy')
+plt.show()
+plt.plot(results.history['val_accuracy'])
+plt.title('val_accuracy')
+plt.show()
+
+#comparisons
+plt.plot(results.history['loss'])#train_loss
+plt.plot(results.history['val_loss'])
+plt.title('train_loss & val_loss')
+plt.show()
+
+plt.plot(results.history['accuracy'])
+plt.plot(results.history['val_accuracy'])
+plt.title('train_accuracy & val_accuracy')
+plt.show()
+
+
+####################################
+
+idx = random.randint(0, len(X_train))
+
+
+preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1)
+preds_val = model.predict(X_train[int(X_train.shape[0]*0.9):], verbose=1)
+preds_test = model.predict(X_test, verbose=1)
+
+ 
+preds_train_t = (preds_train > 0.5).astype(np.uint8)
+preds_val_t = (preds_val > 0.5).astype(np.uint8)
+preds_test_t = (preds_test > 0.5).astype(np.uint8)
+
+
+# Perform a sanity check on some random training samples
+ix = random.randint(0, len(preds_train_t))
+imshow(X_train[ix])
+plt.show()
+imshow(np.squeeze(Y_train[ix]))
+plt.show()
+imshow(np.squeeze(preds_train_t[ix]))
+plt.show()
+
+# Perform a sanity check on some random validation samples
+ix = random.randint(0, len(preds_val_t))
+imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.show()
+imshow(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
+plt.show()
+imshow(np.squeeze(preds_val[ix]))
+plt.show()
+
+ix = random.randint(0, len(preds_test_t))
+imshow(X_test[ix])
+plt.show()
+imshow(np.squeeze(preds_test[ix]))
+plt.show()
+
+
+
+ix = random.randint(0, len(preds_test_t))
+imshow(X_test[ix])
+plt.show()
+
+A = np.squeeze(preds_test[ix])
+mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
+img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
+imshow(img_t1[1].astype('uint8'),cmap='binary')
+plt.show()
+
+
+
+ix = random.randint(0, len(preds_test_t))
+imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.show()
+A = np.squeeze(preds_test[ix-1,:,:,:])
+mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
+
+img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
+
+imshow(img_t1[1].astype('uint8'),cmap='binary')
+plt.show()
+
+
+# ####!tensorboard --logdir=logs/ --host localhost --port 8088
+
