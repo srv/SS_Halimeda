@@ -13,17 +13,21 @@ import matplotlib.pyplot as plt
 seed = 42
 np.random.seed = seed
 
+save_path="model_outputs"
+
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 IMG_CHANNELS = 3
 
-TRAIN_images_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_train/images/"
-TRAIN_masks_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_train/masks/"
-TEST_PATH = "C:/Users/person/Documents/FDR_Images/halimeda_test/"
+TRAIN_images_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/images/"
+TRAIN_masks_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/masks/"
+TEST_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_test/"
 
 train_images_list = os.listdir(TRAIN_images_PATH)
 train_masks_list = os.listdir(TRAIN_masks_PATH)
 test_list = os.listdir(TEST_PATH)
+
+
 
 # train images
 X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
@@ -123,56 +127,87 @@ outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary act
  
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 opt = tf.keras.optimizers.Adam(learning_rate=1e-6)
-model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
+model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 #model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
 model.summary()
 
 ################################
 #Modelcheckpoint
-checkpointer = tf.keras.callbacks.ModelCheckpoint('model_for_nuclei.h5', verbose=1, save_best_only=True)
+checkpointer = tf.keras.callbacks.ModelCheckpoint('halimeda_SS.h5', verbose=1, save_best_only=True)
 
 callbacks = [
         tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'),
         tf.keras.callbacks.TensorBoard(log_dir='logs')]
 
-results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=16, epochs=1500, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=2, epochs=100, callbacks=callbacks)
+
+tf.keras.models.save_model(model,save_path+"/Halimeda_SS.h5")
 
 ####################################
 #plot metrics
+plt.figure()
 plt.plot(results.history['mse'])
 plt.title('mse')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+
+#plt.show()
 plt.plot(results.history['mae'])
 plt.title('mae')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 plt.plot(results.history['mape'])
 plt.title('mape')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 
 plt.plot(results.history['loss'])#train_loss
 plt.title('train_loss')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 plt.plot(results.history['val_loss'])
 plt.title('val_loss')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 plt.plot(results.history['accuracy'])
 plt.title('train_accuracy')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 plt.plot(results.history['val_accuracy'])
 plt.title('val_accuracy')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 #comparisons
 plt.plot(results.history['loss'])#train_loss
 plt.plot(results.history['val_loss'])
 plt.title('train_loss & val_loss')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 plt.plot(results.history['accuracy'])
 plt.plot(results.history['val_accuracy'])
 plt.title('train_accuracy & val_accuracy')
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 
 ####################################
@@ -192,52 +227,97 @@ preds_test_t = (preds_test > 0.5).astype(np.uint8)
 
 # Perform a sanity check on some random training samples
 ix = random.randint(0, len(preds_train_t))
-imshow(X_train[ix])
-plt.show()
-imshow(np.squeeze(Y_train[ix]))
-plt.show()
+##imshow(X_train[ix])
+plt.plot(X_train[ix])
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
+##imshow(np.squeeze(Y_train[ix]))
+plt.plot(np.squeeze(Y_train[ix]))
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 imshow(np.squeeze(preds_train_t[ix]))
-plt.show()
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 # Perform a sanity check on some random validation samples
 ix = random.randint(0, len(preds_val_t))
-imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.show()
-imshow(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
-plt.show()
-imshow(np.squeeze(preds_val[ix]))
-plt.show()
+##imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.figure()
+plt.savefig(save_path)
 
+# imshow(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
+plt.plot(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
+plt.figure()
+plt.savefig(save_path)
+#plt.show()
+
+plt.figure()
+# imshow(np.squeeze(preds_val[ix]))
+plt.plot(np.squeeze(preds_val[ix]))
+plt.savefig(save_path)
+#plt.show()
+
+plt.figure()
+ix = random.randint(0, len(preds_test_t))
+##imshow(X_test[ix])
+plt.plot(X_test[ix])
+plt.savefig(save_path)
+#plt.show()
+
+plt.figure()
+##imshow(np.squeeze(preds_test[ix]))
+plt.plot(np.squeeze(preds_test[ix]))
+plt.savefig(save_path)
+
+#plt.show()
+
+
+plt.figure()
 ix = random.randint(0, len(preds_test_t))
 imshow(X_test[ix])
-plt.show()
-imshow(np.squeeze(preds_test[ix]))
-plt.show()
+# plt.plot(X_test[ix])
 
+plt.savefig(save_path)
 
-
-ix = random.randint(0, len(preds_test_t))
-imshow(X_test[ix])
-plt.show()
-
+#plt.show()
+plt.figure()
 A = np.squeeze(preds_test[ix])
 mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
 img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
-imshow(img_t1[1].astype('uint8'),cmap='binary')
-plt.show()
+##imshow(img_t1[1].astype('uint8'),cmap='binary')
+plt.plot(img_t1[1].astype('uint8'),cmap='binary')
+
+plt.savefig(save_path)
+
+#plt.show()
 
 
 
 ix = random.randint(0, len(preds_test_t))
-imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.show()
+##imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 A = np.squeeze(preds_test[ix-1,:,:,:])
 mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
 
 img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
 
-imshow(img_t1[1].astype('uint8'),cmap='binary')
-plt.show()
+##imshow(img_t1[1].astype('uint8'),cmap='binary')
+plt.plot(img_t1[1].astype('uint8'),cmap='binary')
+plt.figure()
+plt.savefig(save_path)
+
+#plt.show()
 
 
 # ####!tensorboard --logdir=logs/ --host localhost --port 8088
