@@ -224,87 +224,83 @@ preds_train_t = (preds_train > 0.5).astype(np.uint8)
 preds_val_t = (preds_val > 0.5).astype(np.uint8)
 preds_test_t = (preds_test > 0.5).astype(np.uint8)
 
+np.save(save_path+"/preds_train",preds_test_t)
+np.save(save_path+"/preds_val_t",preds_val_t)
+np.save(save_path+"/preds_test_t",preds_test_t)
 
 # Perform a sanity check on some random training samples
 ix = random.randint(0, len(preds_train_t))
-##imshow(X_train[ix])
-plt.plot(X_train[ix])
 plt.figure()
+imshow(X_train[ix])
+# plt.plot(X_train[ix])
 plt.savefig(save_path)
-
 #plt.show()
-##imshow(np.squeeze(Y_train[ix]))
-plt.plot(np.squeeze(Y_train[ix]))
+
 plt.figure()
+imshow(np.squeeze(Y_train[ix]))
+# plt.plot(np.squeeze(Y_train[ix]))
 plt.savefig(save_path)
-
 #plt.show()
+
+plt.figure()
 imshow(np.squeeze(preds_train_t[ix]))
-plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/preds_train")
 #plt.show()
 
 # Perform a sanity check on some random validation samples
+plt.figure()
 ix = random.randint(0, len(preds_val_t))
-##imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.figure()
-plt.savefig(save_path)
-
+imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+# plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
+plt.savefig(save_path+"/X_train")
 # imshow(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
+
+plt.figure()
 plt.plot(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
-plt.figure()
-plt.savefig(save_path)
+plt.savefig(save_path+"/Ytrain")
 #plt.show()
 
 plt.figure()
-# imshow(np.squeeze(preds_val[ix]))
-plt.plot(np.squeeze(preds_val[ix]))
-plt.savefig(save_path)
+imshow(np.squeeze(preds_val[ix]))
+# plt.plot(np.squeeze(preds_val[ix]))
+plt.savefig(save_path+"preds_val")
 #plt.show()
-
-plt.figure()
-ix = random.randint(0, len(preds_test_t))
-##imshow(X_test[ix])
-plt.plot(X_test[ix])
-plt.savefig(save_path)
-#plt.show()
-
-plt.figure()
-##imshow(np.squeeze(preds_test[ix]))
-plt.plot(np.squeeze(preds_test[ix]))
-plt.savefig(save_path)
-
-#plt.show()
-
 
 plt.figure()
 ix = random.randint(0, len(preds_test_t))
 imshow(X_test[ix])
 # plt.plot(X_test[ix])
+plt.savefig(save_path+"/Xtest")
+#plt.show()
 
-plt.savefig(save_path)
+plt.figure()
+imshow(np.squeeze(preds_test[ix]))
+# plt.plot(np.squeeze(preds_test[ix]))
+plt.savefig(save_path+"/preds_test")
+#plt.show()
+
+plt.figure()
+ix = random.randint(0, len(preds_test_t))
+imshow(X_test[ix])
+# plt.plot(X_test[ix])
+plt.savefig(save_path+"/preds_test_th")
 
 #plt.show()
 plt.figure()
 A = np.squeeze(preds_test[ix])
 mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
 img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
-##imshow(img_t1[1].astype('uint8'),cmap='binary')
-plt.plot(img_t1[1].astype('uint8'),cmap='binary')
-
-plt.savefig(save_path)
-
+imshow(img_t1[1].astype('uint8'),cmap='binary')
+# plt.plot(img_t1[1].astype('uint8'),cmap='binary')
+plt.savefig(save_path+"/img_t1")
 #plt.show()
 
 
-
 ix = random.randint(0, len(preds_test_t))
-##imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
+imshow(X_train[int(X_train.shape[0]*0.9):][ix])
+# plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
 plt.figure()
-plt.savefig(save_path)
+plt.savefig(save_path+"/Xtrain")
 
 #plt.show()
 A = np.squeeze(preds_test[ix-1,:,:,:])
@@ -315,8 +311,7 @@ img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
 ##imshow(img_t1[1].astype('uint8'),cmap='binary')
 plt.plot(img_t1[1].astype('uint8'),cmap='binary')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/img_t1_2")
 #plt.show()
 
 
