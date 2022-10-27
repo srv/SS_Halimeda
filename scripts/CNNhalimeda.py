@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import tensorflow as tf
 import os
@@ -5,6 +6,7 @@ import random
 import cv2 #pip install opencv-python
  
 from tqdm import tqdm 
+from numba import cuda
 
 from skimage.io import imread, imshow
 from skimage.transform import resize
@@ -15,34 +17,39 @@ np.random.seed = seed
 
 save_path="model_outputs"
 
-IMG_WIDTH = 256
-IMG_HEIGHT = 256
+IMG_WIDTH = 1024
+IMG_HEIGHT = 1024
 IMG_CHANNELS = 3
 
-TRAIN_images_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/images/"
-TRAIN_masks_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/masks/"
-TEST_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_test/"
+#TRAIN_images_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/images/"
+#TRAIN_masks_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/masks/"
+#TEST_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_test/"
 
-train_images_list = os.listdir(TRAIN_images_PATH)
-train_masks_list = os.listdir(TRAIN_masks_PATH)
-test_list = os.listdir(TEST_PATH)
+TRAIN_images_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/train/images/"
+TRAIN_masks_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/train/masks/"
+TEST_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/test/images/"
 
 
+
+train_images_list = sorted(os.listdir(TRAIN_images_PATH))
+train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
+test_list = sorted(os.listdir(TEST_PATH))
+
+
+
+# %%
 
 # train images
 X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-#sizes_test = []
 print('Resizing train images') 
 for n, id_ in tqdm(enumerate(train_images_list), total=len(train_images_list)):
     path = TRAIN_images_PATH + id_
     img = imread(path)[:,:,:IMG_CHANNELS]
-    #sizes_test.append([img.shape[0], img.shape[1]])
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_train[n] = img
 
 # masks images
 Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
-#sizes_test = []
 print('Resizing masks images') 
 for n, id_ in tqdm(enumerate(train_masks_list), total=len(train_masks_list)):
     path = TRAIN_masks_PATH + id_
@@ -50,7 +57,6 @@ for n, id_ in tqdm(enumerate(train_masks_list), total=len(train_masks_list)):
     mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
     Y_train[n] = mask
 
-    
 # test images
 X_test = np.zeros((len(test_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
 sizes_test = []
@@ -62,12 +68,31 @@ for n, id_ in tqdm(enumerate(test_list), total=len(test_list)):
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
+
+np.save(save_path+"/Xtrain1024_L",X_train)
+np.save(save_path+"/Ytrain1024_L",Y_train)
+np.save(save_path+"/Xtest1024_L",X_test)
+
+# %%
+X_train=np.load(save_path+"/Xtrain1024_L.npy",allow_pickle=True)
+Y_train=np.load(save_path+"/Ytrain1024_L.npy",allow_pickle=True)
+X_test=np.load(save_path+"/Xtest1024_L.npy",allow_pickle=True)
+
+
 print('Done!')
 print('Xtrain:',X_train.shape)
 print('Ytrain:',Y_train.shape)
 print('Xtest:',X_test.shape)
 
+plt.figure()
+imshow(X_train[0])
 
+plt.figure()
+imshow(Y_train[0])
+
+# %%
+device = cuda.get_current_device()
+device.reset()
 
 #Build the model
 inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
@@ -126,70 +151,73 @@ outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary act
 #outputs = tf.keras.layers.Conv2D(1, (1, 1), activation='sigmoid')(c9)
  
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
-opt = tf.keras.optimizers.Adam(learning_rate=1e-6)
-model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
-#model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape'])
+# opt = tf.keras.optimizers.Adam(learning_rate=1e-6)
+# model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+
 model.summary()
 
 ################################
 #Modelcheckpoint
-checkpointer = tf.keras.callbacks.ModelCheckpoint('halimeda_SS.h5', verbose=1, save_best_only=True)
+checkpointer = tf.keras.callbacks.ModelCheckpoint('halimeda_SS_L.h5', verbose=1, save_best_only=True)
 
 callbacks = [
         tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'),
         tf.keras.callbacks.TensorBoard(log_dir='logs')]
 
-results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=2, epochs=100, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=8, epochs=300, callbacks=callbacks)
+
+print("END OF TRAINING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 tf.keras.models.save_model(model,save_path+"/Halimeda_SS.h5")
+print("model saved!!!")
+
+
+
 
 ####################################
 #plot metrics
+
 plt.figure()
 plt.plot(results.history['mse'])
 plt.title('mse')
-plt.figure()
-plt.savefig(save_path)
-
-
+plt.savefig(save_path+"/mse")
 #plt.show()
+
 plt.plot(results.history['mae'])
 plt.title('mae')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/mae")
 #plt.show()
+
 plt.plot(results.history['mape'])
 plt.title('mape')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/mape")
 #plt.show()
-
 
 plt.plot(results.history['loss'])#train_loss
 plt.title('train_loss')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/train_loss")
 #plt.show()
+
 plt.plot(results.history['val_loss'])
 plt.title('val_loss')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/val_loss")
 #plt.show()
+
 plt.plot(results.history['accuracy'])
 plt.title('train_accuracy')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/train_accuracy")
 #plt.show()
+
 plt.plot(results.history['val_accuracy'])
 plt.title('val_accuracy')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/val_acuracy")
 #plt.show()
 
 #comparisons
@@ -197,123 +225,95 @@ plt.plot(results.history['loss'])#train_loss
 plt.plot(results.history['val_loss'])
 plt.title('train_loss & val_loss')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/train_val_loss")
 #plt.show()
 
 plt.plot(results.history['accuracy'])
 plt.plot(results.history['val_accuracy'])
 plt.title('train_accuracy & val_accuracy')
 plt.figure()
-plt.savefig(save_path)
-
+plt.savefig(save_path+"/train_val_accuracy")
 #plt.show()
+
+plt.figure()
+plt.plot(results.history['precission'])
+plt.plot(results.history['recall'])
+plt.title('Precission and recall')
+plt.figure()
+plt.savefig(save_path+"/Precission_and_recall")
 
 
 ####################################
 
-idx = random.randint(0, len(X_train))
 
+idx = random.randint(0, len(X_train))
 
 preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1)
 preds_val = model.predict(X_train[int(X_train.shape[0]*0.9):], verbose=1)
 preds_test = model.predict(X_test, verbose=1)
 
- 
 preds_train_t = (preds_train > 0.5).astype(np.uint8)
 preds_val_t = (preds_val > 0.5).astype(np.uint8)
 preds_test_t = (preds_test > 0.5).astype(np.uint8)
 
-np.save(save_path+"/preds_train",preds_test_t)
+print("PREDICTIONS DONE!!!!!!!!!!!!!!!!!!!")
+
+np.save(save_path+"/preds_train",preds_train)
+np.save(save_path+"/preds_val",preds_val)
+np.save(save_path+"/preds_test",preds_test)
+#thr
+np.save(save_path+"/preds_train_t",preds_train_t)
 np.save(save_path+"/preds_val_t",preds_val_t)
 np.save(save_path+"/preds_test_t",preds_test_t)
 
-# Perform a sanity check on some random training samples
-ix = random.randint(0, len(preds_train_t))
-plt.figure()
-imshow(X_train[ix])
-# plt.plot(X_train[ix])
-plt.savefig(save_path)
-#plt.show()
-
-plt.figure()
-imshow(np.squeeze(Y_train[ix]))
-# plt.plot(np.squeeze(Y_train[ix]))
-plt.savefig(save_path)
-#plt.show()
-
-plt.figure()
-imshow(np.squeeze(preds_train_t[ix]))
-plt.savefig(save_path+"/preds_train")
-#plt.show()
-
-# Perform a sanity check on some random validation samples
-plt.figure()
-ix = random.randint(0, len(preds_val_t))
-imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-# plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.savefig(save_path+"/X_train")
-# imshow(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
-
-plt.figure()
-plt.plot(np.squeeze(Y_train[int(Y_train.shape[0]*0.9):][ix]))
-plt.savefig(save_path+"/Ytrain")
-#plt.show()
-
-plt.figure()
-imshow(np.squeeze(preds_val[ix]))
-# plt.plot(np.squeeze(preds_val[ix]))
-plt.savefig(save_path+"preds_val")
-#plt.show()
-
-plt.figure()
-ix = random.randint(0, len(preds_test_t))
-imshow(X_test[ix])
-# plt.plot(X_test[ix])
-plt.savefig(save_path+"/Xtest")
-#plt.show()
-
-plt.figure()
-imshow(np.squeeze(preds_test[ix]))
-# plt.plot(np.squeeze(preds_test[ix]))
-plt.savefig(save_path+"/preds_test")
-#plt.show()
-
-plt.figure()
-ix = random.randint(0, len(preds_test_t))
-imshow(X_test[ix])
-# plt.plot(X_test[ix])
-plt.savefig(save_path+"/preds_test_th")
-
-#plt.show()
-plt.figure()
-A = np.squeeze(preds_test[ix])
-mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
-img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
-imshow(img_t1[1].astype('uint8'),cmap='binary')
-# plt.plot(img_t1[1].astype('uint8'),cmap='binary')
-plt.savefig(save_path+"/img_t1")
-#plt.show()
+print(type(results.history))
+np.save(save_path+"/history",results.history)
+np.save(save_path+"/results",results)
 
 
-ix = random.randint(0, len(preds_test_t))
-imshow(X_train[int(X_train.shape[0]*0.9):][ix])
-# plt.plot(X_train[int(X_train.shape[0]*0.9):][ix])
-plt.figure()
-plt.savefig(save_path+"/Xtrain")
-
-#plt.show()
-A = np.squeeze(preds_test[ix-1,:,:,:])
-mid_point = int (((np.max(A) + np.min(A)) / 2 ) * 255 )
-
-img_t1 = cv2.threshold(A*255.0, mid_point, 255, cv2.THRESH_BINARY_INV)
-
-##imshow(img_t1[1].astype('uint8'),cmap='binary')
-plt.plot(img_t1[1].astype('uint8'),cmap='binary')
-plt.figure()
-plt.savefig(save_path+"/img_t1_2")
-#plt.show()
+# %%
+# %%
+print(results.history.keys())
+# %%
+for idx, name in enumerate(test_list):
+    plt.imsave(save_path+"/inference_out/" + name, np.squeeze(preds_test[idx]))
+    plt.imsave(save_path+"/inference_out_t/" + name, np.squeeze(preds_test_t[idx]))
 
 
 # ####!tensorboard --logdir=logs/ --host localhost --port 8088
 
+# %%
+
+# INFERENCE
+
+
+save_path="model_outputs"
+
+IMG_WIDTH = 1024
+IMG_HEIGHT = 1024
+IMG_CHANNELS = 3
+
+INFER_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/images/"
+infer_list = sorted(os.listdir(INFER_PATH))
+
+
+# infer images
+X_infer = np.zeros((len(infer_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+sizes_infer = []
+print('Resizing infer images') 
+for n, id_ in tqdm(enumerate(infer_list), total=len(infer_list)):
+    path = INFER_PATH + id_
+    img = imread(path)[:,:,:IMG_CHANNELS]
+    sizes_infer.append([img.shape[0], img.shape[1]])
+    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    X_infer[n] = img
+
+
+preds_infer = model.predict(X_infer, verbose=1)
+preds_infer_t = (preds_infer > 0.5).astype(np.uint8)
+for idx, name in enumerate(infer_list):
+    plt.imsave(save_path+"/inference_out_leia_train/" + name, np.squeeze(preds_infer[idx]))
+    plt.imsave(save_path+"/inference_out_t_leia_train/" + name, np.squeeze(preds_infer_t[idx]))
+
+
+# %%
