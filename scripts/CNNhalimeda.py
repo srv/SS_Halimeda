@@ -11,6 +11,8 @@ from numba import cuda
 from skimage.io import imread, imshow
 from skimage.transform import resize
 import matplotlib.pyplot as plt
+import random
+
 
 seed = 42
 np.random.seed = seed
@@ -25,15 +27,44 @@ IMG_CHANNELS = 3
 #TRAIN_masks_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/masks/"
 #TEST_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_test/"
 
-TRAIN_images_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/train/images/"
-TRAIN_masks_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/train/masks/"
-TEST_PATH = "/home/object/Desktop/data/halimeda/train_test/INVHALI/semantic_segmentation/bones/test/images/"
+TRAIN_images_PATH = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_512/images/"
+TRAIN_masks_PATH = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_512/masks/"
 
-
+TEST_SPLIT=0.1
+test_list=[]
 
 train_images_list = sorted(os.listdir(TRAIN_images_PATH))
 train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
-test_list = sorted(os.listdir(TEST_PATH))
+num_images=len(train_images_list)
+
+print("NUM IMAGES:",num_images)
+#check:
+if  num_images != len(train_masks_list):
+    print("WARNING: THE NUMBER OF MASKS AND IMAGES IS DIFFER!")
+
+
+#select test set randomly
+test_set_len=TEST_SPLIT*len(train_images_list)
+for i in range(test_set_len):
+
+    idx=randint(0, len(train_images_list)-1)
+    test_list.append(train_images_list[idx])
+    train_images_list.pop(idx)
+    train_masks_list.pop(idx)
+
+
+set_imgs=[]
+set_imgs.extend(test_list)
+print("len test_list is ",len(test_list))
+print("len set ",len(set(set_imgs)))
+
+set_imgs.extend(train_list)
+print("len_train_list is ",train_list)
+print("len set ",len(set(set_imgs)))
+
+set_imgs.extend(train_masks_list)
+print("train_mask_list is ",train_masks_list)
+print("len set ",len(set(set_imgs)))
 
 
 
@@ -45,7 +76,7 @@ print('Resizing train images')
 for n, id_ in tqdm(enumerate(train_images_list), total=len(train_images_list)):
     path = TRAIN_images_PATH + id_
     img = imread(path)[:,:,:IMG_CHANNELS]
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    # img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_train[n] = img
 
 # masks images
@@ -54,7 +85,7 @@ print('Resizing masks images')
 for n, id_ in tqdm(enumerate(train_masks_list), total=len(train_masks_list)):
     path = TRAIN_masks_PATH + id_
     mask = imread(path)[:,:,:1]
-    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+    # mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
     Y_train[n] = mask
 
 # test images
@@ -65,7 +96,7 @@ for n, id_ in tqdm(enumerate(test_list), total=len(test_list)):
     path = TEST_PATH + id_
     img = imread(path)[:,:,:IMG_CHANNELS]
     sizes_test.append([img.shape[0], img.shape[1]])
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    # img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
 
