@@ -16,27 +16,31 @@ IMG_WIDTH = 512
 IMG_HEIGHT = 512
 IMG_CHANNELS = 3
 
-
-
 """
 binarize an image
 """
 
 # INITIALIZATIONS:
 
-TRAIN_images_PATH = "/home/uib/Documentos/cat/INVHALI/data_to_hd/halimeda/sets/semantic/cabrera_512/images/"
-TRAIN_masks_PATH = "/home/uib/Documentos/cat/INVHALI/data_to_hd/halimeda/sets/semantic/cabrera_512/masks/"
-TRAIN_masks_PATH_thr="/home/uib/Documentos/cat/INVHALI/data_to_hd/halimeda/sets/semantic/cabrera_512/masks_thr/"
-TEST_FOLDER= "/home/uib/Documentos/cat/INVHALI/data_to_hd/halimeda/sets/semantic/cabrera_512/test/"
+TRAIN_images_PATH = save_path+"/images/"
+TRAIN_masks_PATH = save_path+"/masks/"
+TRAIN_masks_PATH_thr=save_path+"/masks_thr/"
+TEST_FOLDER= save_path+"/test/"
+TRAIN_FOLDER=save_path+"/train/"
+
+not_binarized_yet=True
 
 if not os.path.exists(TEST_FOLDER):
       os.mkdir(TEST_FOLDER)
+
+if not os.path.exists(TRAIN_FOLDER):
+      os.mkdir(TRAIN_FOLDER)
 
 if not os.path.exists(TRAIN_masks_PATH_thr):
     os.mkdir(TRAIN_masks_PATH_thr)
 
 #PART 1: BINARIZE MASKS
-not_binarized_yet=False
+
 if not_binarized_yet:
     for image_file in os.listdir(TRAIN_masks_PATH):  # for each file in the folder
         #   print(image_file)
@@ -49,7 +53,7 @@ if not_binarized_yet:
 
         y = np.where(image <= thr)  # below threshold
         img[y[0], y[1]] = 0  # set to black
-        print(set(img.flatten()))
+        # print(set(img.flatten()))
         image_id=image_file.split(".")[0]
         # print(image_file)
         imageio.imsave(TRAIN_masks_PATH_thr + "/" + image_id+".png", img)  # generate image file
@@ -81,6 +85,12 @@ if not os.path.exists(TEST_FOLDER+"images"):
 if not os.path.exists(TEST_FOLDER+"masks"):
   os.mkdir(TEST_FOLDER+"masks")
 
+if not os.path.exists(TRAIN_FOLDER+"images"):
+      os.mkdir(TRAIN_FOLDER+"images")
+if not os.path.exists(TRAIN_FOLDER+"masks"):
+  os.mkdir(TRAIN_FOLDER+"masks")
+
+
 #CHECK!
 set_imgs=[]
 set_imgs.extend(test_list)
@@ -99,16 +109,58 @@ for image,mask in zip(test_list,test_masks):
     shutil.copyfile(TRAIN_images_PATH+"/"+image,TEST_FOLDER+"/images/"+image)
     shutil.copyfile(TRAIN_masks_PATH_thr+"/"+mask,TEST_FOLDER+"/masks/"+mask)
 
+for image,mask in zip(train_images_list,train_masks_list):
+    shutil.copyfile(TRAIN_images_PATH+"/"+image,TRAIN_FOLDER+"/images/"+image)
+    shutil.copyfile(TRAIN_masks_PATH_thr+"/"+mask,TRAIN_FOLDER+"/masks/"+mask)
+
 #check!
 # save_path="/content/drive/MyDrive/HALIMEDA"
-print(enumerate(train_images_list[0:10]))
 print(train_images_list[0:10])
 print(train_masks_list[0:10])
 print("")
 print(train_images_list[-10:])
 print(train_masks_list[-10:])
+print("")
+print(test_list[0:10])
+print(test_masks[0:10])
+print("")
+print(test_list[-10:])
+print(test_masks[-10:])
 
 #CREATE AND SAVE data vectors
+
+new_train_imgs_list=sorted(train_images_list)
+new_train_masks_list=sorted(train_masks_list)
+new_test_list=sorted(test_list)
+new_test_masks_list=sorted(test_masks)
+
+if new_train_imgs_list != train_images_list:
+    print("PROBLEM FOUND 1!!!")
+
+if new_train_masks_list != train_masks_list:
+    print("PROBLEM FOUND 2!!!")
+    
+if new_test_list != test_list:
+    for idx,elem in enumerate(new_test_list):
+        if elem!=test_list[idx]:
+            print("PROBLEM IN ELEM :",idx)
+            print("new_test_list :",new_test_list[idx])
+            print("test_list :",test_list[idx])
+    print("PROBLEM FOUND 3!!!")
+    
+if new_test_masks_list != test_masks:
+    for idx,elem in enumerate(new_test_list):
+        if elem!=test_list[idx]:
+            print("PROBLEM IN ELEM :",idx)
+            print("new_test_list :",new_test_list[idx])
+            print("test_list :",test_list[idx])
+    print("PROBLEM FOUND 4 !!!")
+
+
+train_images_list = new_train_imgs_list
+train_masks_list = new_train_masks_list
+test_list = new_test_list
+test_masks = new_test_masks_list
 
 llista=[]
 # train images
@@ -144,9 +196,18 @@ for n, id_ in tqdm(enumerate(test_list), total=len(test_list)):
     X_test[n] = img
 
 
+print(X_train.shape)
+print(Y_train.shape)
+print(X_test.shape)
+
 np.save(save_path+"/Xtrain_C512",X_train)
 np.save(save_path+"/Ytrain_C512",Y_train)
 np.save(save_path+"/Xtest_C512",X_test)
 
+
+
 new_list=[int(elem[0]) for elem in llista]
 print(set(new_list))
+
+test=np.load(save_path+"/Xtrain_C512.npy",allow_pickle=True)
+print(test.shape)
