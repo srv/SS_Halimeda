@@ -2,7 +2,7 @@ import numpy
 import os
 from PIL import Image
 
-folder = "/home/plome/DATA/INVHALI/sets/semantic/backgrounds/masks"
+folder = "/home/plome/DATA/INVHALI/sets/semantic/backgrounds_512/suelta"
 
 for filename in os.listdir(folder):
 

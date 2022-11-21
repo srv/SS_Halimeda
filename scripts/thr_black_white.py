@@ -14,24 +14,32 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 from skimage.transform import resize
 # from numba import cuda
+import u_net
 seed = 42
 np.random.seed = seed
-save_path="/home/plome/DATA/INVHALI/sets/semantic/cabrera_cabrera_leia_512/"
 
 IMG_WIDTH = 512
 IMG_HEIGHT = 512
 IMG_CHANNELS = 3
 
-model_name="halimeda_SS_C_C_L512.h5"
-model_suffix="_C_C_L512"
+batch_size=16 
+lr=1e-3
+
+base_path="/home/plome/DATA/INVHALI/sets/semantic/c_c_leia_bckgrnds"
+out_path="/home/plome/SS_Halimeda/entrenos/c_c_leia_bckgrnds"
+
+TRAIN_images_PATH = base_path+"/images/"
+TRAIN_masks_PATH = base_path+"/masks/"
+
+TRAIN_masks_PATH_thr=out_path+"/masks_thr/"
+TEST_FOLDER= out_path+"/test/"
+TRAIN_FOLDER=out_path+"/train/"
+
+model_name="halimeda_SS_C_C_L_b512.h5"
+model_suffix="_C_C_L_b512"
 
 # INITIALIZATIONS:
 # %% 
-TRAIN_images_PATH = save_path+"/images/"
-TRAIN_masks_PATH = save_path+"/masks/"
-TRAIN_masks_PATH_thr=save_path+"/masks_thr/"
-TEST_FOLDER= save_path+"/test/"
-TRAIN_FOLDER=save_path+"/train/"
 
 not_binarized_yet=True
 
@@ -45,6 +53,7 @@ if not os.path.exists(TRAIN_masks_PATH_thr):
     os.mkdir(TRAIN_masks_PATH_thr)
 
 #PART 1: BINARIZE MASKS
+print(len(os.listdir(TRAIN_masks_PATH)))
 
 if not_binarized_yet:
     for image_file in os.listdir(TRAIN_masks_PATH):  # for each file in the folder
@@ -62,6 +71,9 @@ if not_binarized_yet:
         image_id=image_file.split(".")[0]
         # print(image_file)
         imageio.imsave(TRAIN_masks_PATH_thr + "/" + image_id+".png", img)  # generate image file
+
+print(len(os.listdir(TRAIN_masks_PATH_thr)))
+
 
 
 #%%
@@ -183,9 +195,9 @@ print(X_train.shape)
 print(Y_train.shape)
 print(X_test.shape)
 
-np.save(save_path+"/Xtrain"+model_suffix+".npy",X_train)
-np.save(save_path+"/Ytrain"+model_suffix+".npy",Y_train)
-np.save(save_path+"/Xtest"+model_suffix+".npy",X_test)
+np.save(out_path+"/Xtrain"+model_suffix+".npy",X_train)
+np.save(out_path+"/Ytrain"+model_suffix+".npy",Y_train)
+np.save(out_path+"/Xtest"+model_suffix+".npy",X_test)
 
 new_list=[int(elem[0]) for elem in llista]
 print(set(new_list))
@@ -221,65 +233,18 @@ imshow(Y_train[i])
 # device.reset()
 
 #Build the model
-inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
-s = tf.keras.layers.Lambda(lambda x: x / 255)(inputs)
+model=u_net.define_unet(IMG_HEIGHT,IMG_WIDTH,IMG_CHANNELS)
 
-#Contraction path
-c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(s)
-c1 = tf.keras.layers.Dropout(0.1)(c1)
-c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1)
-p1 = tf.keras.layers.MaxPooling2D((2, 2))(c1)
+f = open(out_path+"params.txt", "a")
+f.write("Params used in this training:")
+f.write("batch size: "+ str(batch_size))
+f.write("lr: "+ str(lr))
+f.close()
 
-c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
-c2 = tf.keras.layers.Dropout(0.1)(c2)
-c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2)
-p2 = tf.keras.layers.MaxPooling2D((2, 2))(c2)
- 
-c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
-c3 = tf.keras.layers.Dropout(0.2)(c3)
-c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3)
-p3 = tf.keras.layers.MaxPooling2D((2, 2))(c3)
- 
-c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
-c4 = tf.keras.layers.Dropout(0.2)(c4)
-c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4)
-p4 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(c4)
- 
-c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
-c5 = tf.keras.layers.Dropout(0.3)(c5)
-c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5)
+opt = tf.keras.optimizers.Adam(learning_rate=lr)
+model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 
-#Expansive path 
-u6 = tf.keras.layers.Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c5)
-u6 = tf.keras.layers.concatenate([u6, c4])
-c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
-c6 = tf.keras.layers.Dropout(0.2)(c6)
-c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6)
- 
-u7 = tf.keras.layers.Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c6)
-u7 = tf.keras.layers.concatenate([u7, c3])
-c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
-c7 = tf.keras.layers.Dropout(0.2)(c7)
-c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7)
- 
-u8 = tf.keras.layers.Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c7)
-u8 = tf.keras.layers.concatenate([u8, c2])
-c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
-c8 = tf.keras.layers.Dropout(0.1)(c8)
-c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8)
- 
-u9 = tf.keras.layers.Conv2DTranspose(16, (2, 2), strides=(2, 2), padding='same')(c8)
-u9 = tf.keras.layers.concatenate([u9, c1], axis=3)
-c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
-c9 = tf.keras.layers.Dropout(0.1)(c9)
-c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9)
-outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary activation output
-#outputs = tf.keras.layers.Conv2D(1, (1, 1), activation='sigmoid')(c9)
- 
-model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
-# opt = tf.keras.optimizers.Adam(learning_rate=1e-6)
-# model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
-model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+# model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 
 model.summary()
 
@@ -291,7 +256,7 @@ callbacks = [
         tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'),
         tf.keras.callbacks.TensorBoard(log_dir='logs')]
 
-results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=8, epochs=300, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=batch_size, epochs=300, callbacks=callbacks)
 
 print("END OF TRAINING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
@@ -368,7 +333,7 @@ plt.savefig(save_path+"/Precision_and_recall")
 ####################################
 
 # %%
-idx = random.randint(0, len(X_train))
+idx = random.randint(0, len(X_train)-1)
 
 preds_train = model.predict(X_train[:int(X_train.shape[0]*0.9)], verbose=1)
 preds_val = model.predict(X_train[int(X_train.shape[0]*0.9):], verbose=1)
@@ -416,9 +381,9 @@ for idx, name in enumerate(test_list):
 # IMG_HEIGHT = 512
 # IMG_CHANNELS = 3
 
-save_path = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_cabrera_leia_512/test/"
+save_path = "/home/plome/SS_Halimeda/data/test_inference/"
 
-INFER_PATH = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_cabrera_leia_512/test/images/"
+INFER_PATH = "/home/plome/SS_Halimeda/data/test/"
 
 infer_list = sorted(os.listdir(INFER_PATH))
 
