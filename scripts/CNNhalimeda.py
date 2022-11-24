@@ -12,7 +12,7 @@ from skimage.io import imread, imshow
 from skimage.transform import resize
 import matplotlib.pyplot as plt
 import random
-
+import u_net
 
 seed = 42
 np.random.seed = seed
@@ -23,12 +23,9 @@ IMG_WIDTH = 1024
 IMG_HEIGHT = 1024
 IMG_CHANNELS = 3
 
-#TRAIN_images_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/images/"
-#TRAIN_masks_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_train/masks/"
-#TEST_PATH = "/home/object/SS_Halimeda/Halimeda_Images/SubSelection_GoodFor_Segmentation/DetailedIMGs/halimeda_test/"
-
-TRAIN_images_PATH = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_512/images/"
-TRAIN_masks_PATH = "/home/plome/DATA/INVHALI/sets/semantic/cabrera_512/masks/"
+base="/home/plome/DATA/INVHALI/sets/semantic/c_c_leia_bckgrnds"
+TRAIN_images_PATH = base + "/images/"
+TRAIN_masks_PATH = base + "/masks/"
 
 TEST_SPLIT=0.1
 test_list=[]

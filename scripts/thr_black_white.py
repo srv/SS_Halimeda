@@ -22,7 +22,7 @@ IMG_WIDTH = 512
 IMG_HEIGHT = 512
 IMG_CHANNELS = 3
 
-batch_size=16 
+batch_size=8
 lr=1e-3
 
 base_path="/home/plome/DATA/INVHALI/sets/semantic/c_c_leia_bckgrnds"
@@ -86,6 +86,7 @@ train_masks_list = sorted(os.listdir(TRAIN_masks_PATH_thr))
 num_images=len(train_images_list)
 
 print("NUM IMAGES:",num_images)
+#%%
 #check:
 if  num_images != len(train_masks_list):
     print("WARNING: THE NUMBER OF MASKS AND IMAGES IS DIFFER!")
@@ -202,12 +203,12 @@ np.save(out_path+"/Xtest"+model_suffix+".npy",X_test)
 new_list=[int(elem[0]) for elem in llista]
 print(set(new_list))
 
-## THRESHOLDING AND SPLIT DONE!!
+## THRESHOLDING AND SPLIT DONE!!----------------------------------------------------
 
 # %%
-# X_train=np.load(save_path+"/Xtrain1024_L.npy",allow_pickle=True)
-# Y_train=np.load(save_path+"/Ytrain1024_L.npy",allow_pickle=True)
-# X_test=np.load(save_path+"/Xtest1024_L.npy",allow_pickle=True)
+# X_train=np.load(out_path+"/Xtrain_C_C_L_b512.npy",allow_pickle=True)
+# Y_train=np.load(out_path+"/Ytrain_C_C_L_b512.npy",allow_pickle=True)
+# X_test=np.load(out_path+"/Xtest_C_C_L_b512.npy",allow_pickle=True)
 
 #CHECK!!
 
@@ -215,9 +216,11 @@ print('Done!')
 print('Xtrain:',X_train.shape)
 print('Ytrain:',Y_train.shape)
 print('Xtest:',X_test.shape)
-
 i=random.randint(0,X_train.shape[0]-1)
+
+train_images_list[i]
 print("IMAGE IS : ",train_images_list[i])
+
 print()
 print("ploting ",i," th image")
 plt.figure()
@@ -241,10 +244,10 @@ f.write("batch size: "+ str(batch_size))
 f.write("lr: "+ str(lr))
 f.close()
 
-opt = tf.keras.optimizers.Adam(learning_rate=lr)
-model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+# opt = tf.keras.optimizers.Adam(learning_rate=lr)
+# model.compile(optimizer= opt, loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 
-# model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 
 model.summary()
 
@@ -259,8 +262,8 @@ callbacks = [
 results = model.fit(X_train, Y_train, validation_split=0.1, batch_size=batch_size, epochs=300, callbacks=callbacks)
 
 print("END OF TRAINING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
-tf.keras.models.save_model(model,save_path+"/"+model_name)
+# %%
+tf.keras.models.save_model(model,out_path+"/"+model_name)
 print("model saved!!!")
 
 
@@ -270,43 +273,43 @@ print("model saved!!!")
 plt.figure()
 plt.plot(results.history['mse'])
 plt.title('mse')
-plt.savefig(save_path+"/mse")
+plt.savefig(out_path+"/mse")
 
 #plt.show()
 plt.figure()
 plt.plot(results.history['mae'])
 plt.title('mae')
-plt.savefig(save_path+"/mae")
+plt.savefig(out_path+"/mae")
 #plt.show()
 plt.figure()
 plt.plot(results.history['mape'])
 plt.title('mape')
-plt.savefig(save_path+"/mape")
+plt.savefig(out_path+"/mape")
 
 
 #plt.show()
 plt.figure()
 plt.plot(results.history['loss'])#train_loss
 plt.title('train_loss')
-plt.savefig(save_path+"/train_loss")
+plt.savefig(out_path+"/train_loss")
 #plt.show()
 
 plt.figure()
 plt.plot(results.history['val_loss'])
 plt.title('val_loss')
-plt.savefig(save_path+"/val_loss")
+plt.savefig(out_path+"/val_loss")
 #plt.show()
 
 plt.figure()
 plt.plot(results.history['accuracy'])
 plt.title('train_accuracy')
-plt.savefig(save_path+"/train_accuracy")
+plt.savefig(out_path+"/train_accuracy")
 #plt.show()
 
 plt.figure()
 plt.plot(results.history['val_accuracy'])
 plt.title('val_accuracy')
-plt.savefig(save_path+"/val_acuracy")
+plt.savefig(out_path+"/val_acuracy")
 #plt.show()
 
 #comparisons
@@ -314,20 +317,20 @@ plt.figure()
 plt.plot(results.history['loss'])#train_loss
 plt.plot(results.history['val_loss'])
 plt.title('train_loss & val_loss')
-plt.savefig(save_path+"/train_val_loss")
+plt.savefig(out_path+"/train_val_loss")
 #plt.show()
 plt.figure()
 plt.plot(results.history['accuracy'])
 plt.plot(results.history['val_accuracy'])
 plt.title('train_accuracy & val_accuracy')
-plt.savefig(save_path+"/train_val_accuracy")
+plt.savefig(out_path+"/train_val_accuracy")
 #plt.show()
 
 plt.figure()
 plt.plot(results.history['precision'])
 plt.plot(results.history['recall'])
 plt.title('Precission and recall')
-plt.savefig(save_path+"/Precision_and_recall")
+plt.savefig(out_path+"/Precision_and_recall")
 
 
 ####################################
@@ -345,31 +348,31 @@ preds_test_t = (preds_test > 0.5).astype(np.uint8)
 
 print("PREDICTIONS DONE!!!!!!!!!!!!!!!!!!!")
 
-np.save(save_path+"/preds_train",preds_train)
-np.save(save_path+"/preds_val",preds_val)
-np.save(save_path+"/preds_test",preds_test)
+np.save(out_path+"/preds_train",preds_train)
+np.save(out_path+"/preds_val",preds_val)
+np.save(out_path+"/preds_test",preds_test)
 #thr
-np.save(save_path+"/preds_train_t",preds_train_t)
-np.save(save_path+"/preds_val_t",preds_val_t)
-np.save(save_path+"/preds_test_t",preds_test_t)
+np.save(out_path+"/preds_train_t",preds_train_t)
+np.save(out_path+"/preds_val_t",preds_val_t)
+np.save(out_path+"/preds_test_t",preds_test_t)
 
 print(type(results.history))
-np.save(save_path+"/history",results.history)
-np.save(save_path+"/results",results)
+np.save(out_path+"/history",results.history)
+np.save(out_path+"/results",results)
 
 
 # %%
 
-if not os.path.exists(save_path+"/inference_out/"):
+if not os.path.exists(out_path+"/inference_out/"):
 
-    os.mkdir(save_path+"/inference_out/")
-    os.mkdir(save_path+"/inference_out_t/")
+    os.mkdir(out_path+"/inference_out/")
+    os.mkdir(out_path+"/inference_out_t/")
 
 
 
 for idx, name in enumerate(test_list):
-    plt.imsave(save_path+"/inference_out/" + name, np.squeeze(preds_test[idx]))
-    plt.imsave(save_path+"/inference_out_t/" + name, np.squeeze(preds_test_t[idx]))
+    plt.imsave(out_path+"/inference_out/" + name, np.squeeze(preds_test[idx]))
+    plt.imsave(out_path+"/inference_out_t/" + name, np.squeeze(preds_test_t[idx]))
 
 
 # ####!tensorboard --logdir=logs/ --host localhost --port 8088
@@ -381,9 +384,9 @@ for idx, name in enumerate(test_list):
 # IMG_HEIGHT = 512
 # IMG_CHANNELS = 3
 
-save_path = "/home/plome/SS_Halimeda/data/test_inference/"
+save_path = out_path
 
-INFER_PATH = "/home/plome/SS_Halimeda/data/test/"
+INFER_PATH = "/home/plome/SS_Halimeda/entrenos/c_c_leia_bckgrnds/test/images/"
 
 infer_list = sorted(os.listdir(INFER_PATH))
 
