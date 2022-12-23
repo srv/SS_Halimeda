@@ -1,0 +1,162 @@
+import numpy as np
+import tensorflow as tf
+import os
+import random
+import cv2 #pip install opencv-python
+
+from numba import cuda
+
+from skimage.io import imread, imshow
+from skimage.transform import resize
+
+run = "1024_8_default"
+save_path = os.path.join("/home/tintin/SS_Halimeda/runs", run)
+
+IMG_WIDTH = 1024
+IMG_HEIGHT = 1024
+IMG_CHANNELS = 3
+
+TRAIN_images_PATH = "/home/tintin/SS_Halimeda/data/splits/test/train/img"
+TRAIN_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/test/train/mask"
+VAL_images_PATH = "/home/tintin/SS_Halimeda/data/splits/test/val/img"
+VAL_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/test/val/mask"
+
+TEST_SPLIT=0.1
+test_list=[]
+
+train_images_list = sorted(os.listdir(TRAIN_images_PATH))
+train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
+val_images_list = sorted(os.listdir(VAL_images_PATH))
+val_masks_list = sorted(os.listdir(VAL_masks_PATH))
+
+# select test set randomly  
+# TODO cambiar a test fijo y val fija para poder ahcer kfold
+
+test_set_len=int(TEST_SPLIT*len(train_images_list))
+for i in range(test_set_len):
+
+    idx=random.randint(0, len(train_images_list)-1)
+    test_list.append(train_images_list[idx])
+    train_images_list.pop(idx)
+    train_masks_list.pop(idx)
+
+# train images and masks
+X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+print('Loading train images') 
+for n, id_ in enumerate(train_images_list):
+    path = os.path.join(TRAIN_images_PATH, id_)
+    img = imread(path)[:,:,:IMG_CHANNELS]
+    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    X_train[n] = img
+Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
+print('Loading masks images') 
+for n, id_ in enumerate(train_masks_list):
+    path = os.path.join(TRAIN_masks_PATH, id_)
+    mask = imread(path)[:,:,:1]
+    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+    Y_train[n] = mask
+np.save(os.path.join(save_path, "Xtrain"),X_train)
+np.save(os.path.join(save_path, "Ytrain"),Y_train)
+
+
+# val images and masks
+X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+print('Loading val images') 
+for n, id_ in enumerate(val_images_list):
+    path = os.path.join(VAL_images_PATH, id_)
+    img = imread(path)[:,:,:IMG_CHANNELS]
+    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    X_val[n] = img
+Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
+print('Loading masks images') 
+for n, id_ in enumerate(val_masks_list):
+    path = os.path.join(VAL_masks_PATH, id_)
+    mask = imread(path)[:,:,:1]
+    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+    Y_val[n] = mask
+np.save(os.path.join(save_path, "Xval"),X_val)
+np.save(os.path.join(save_path, "Yval"),Y_val)
+
+#X_train=np.load(os.path.join(save_path, "Xtrain.npy"),allow_pickle=True)
+#Y_train=np.load(os.path.join(save_path, "Ytrain.npy"),allow_pickle=True)
+#X_val=np.load(os.path.join(save_path, "Xval.npy"),allow_pickle=True)
+#Y_val=np.load(os.path.join(save_path, "Yval.npy"),allow_pickle=True)
+
+#device = cuda.get_current_device()
+#device.reset()
+
+#Build the model
+inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
+s = tf.keras.layers.Lambda(lambda x: x / 255)(inputs)
+
+c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(s)
+c1 = tf.keras.layers.Dropout(0.1)(c1)
+c1 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c1)
+p1 = tf.keras.layers.MaxPooling2D((2, 2))(c1)
+
+c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p1)
+c2 = tf.keras.layers.Dropout(0.1)(c2)
+c2 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c2)
+p2 = tf.keras.layers.MaxPooling2D((2, 2))(c2)
+ 
+c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p2)
+c3 = tf.keras.layers.Dropout(0.2)(c3)
+c3 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c3)
+p3 = tf.keras.layers.MaxPooling2D((2, 2))(c3)
+ 
+c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p3)
+c4 = tf.keras.layers.Dropout(0.2)(c4)
+c4 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c4)
+p4 = tf.keras.layers.MaxPooling2D(pool_size=(2, 2))(c4)
+ 
+c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(p4)
+c5 = tf.keras.layers.Dropout(0.3)(c5)
+c5 = tf.keras.layers.Conv2D(256, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c5)
+
+u6 = tf.keras.layers.Conv2DTranspose(128, (2, 2), strides=(2, 2), padding='same')(c5)
+u6 = tf.keras.layers.concatenate([u6, c4])
+c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u6)
+c6 = tf.keras.layers.Dropout(0.2)(c6)
+c6 = tf.keras.layers.Conv2D(128, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c6)
+ 
+u7 = tf.keras.layers.Conv2DTranspose(64, (2, 2), strides=(2, 2), padding='same')(c6)
+u7 = tf.keras.layers.concatenate([u7, c3])
+c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u7)
+c7 = tf.keras.layers.Dropout(0.2)(c7)
+c7 = tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c7)
+ 
+u8 = tf.keras.layers.Conv2DTranspose(32, (2, 2), strides=(2, 2), padding='same')(c7)
+u8 = tf.keras.layers.concatenate([u8, c2])
+c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u8)
+c8 = tf.keras.layers.Dropout(0.1)(c8)
+c8 = tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c8)
+ 
+u9 = tf.keras.layers.Conv2DTranspose(16, (2, 2), strides=(2, 2), padding='same')(c8)
+u9 = tf.keras.layers.concatenate([u9, c1], axis=3)
+c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(u9)
+c9 = tf.keras.layers.Dropout(0.1)(c9)
+c9 = tf.keras.layers.Conv2D(16, (3, 3), activation='relu', kernel_initializer='he_normal', padding='same')(c9)
+outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary activation output
+#utputs = tf.keras.layers.Conv2D(1,(1,1), activation='softmax')(c9) # TODO test??
+ 
+model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
+
+# model.compile(optimizer=Adam(LEARNING_RATE), loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+# model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=1e-6), loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+
+model.summary()
+
+#save checkpoints
+checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_best_only=False) # TODO check que hace, estaba en True
+
+callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=save_path)]
+
+print("training")
+results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=8, epochs=2, callbacks=callbacks)
+
+tf.keras.models.save_model(model,os.path.join(save_path, "model.h5"))
+
+
+
+
