@@ -1,13 +1,11 @@
-import numpy as np
-import tensorflow as tf
 import os
+import cv2
 import random
-import cv2 #pip install opencv-python
-
+import numpy as np
 from numba import cuda
-
-from skimage.io import imread, imshow
+import tensorflow as tf
 from skimage.transform import resize
+from skimage.io import imread, imshow
 
 run = "1024_8_default"
 save_path = os.path.join("/home/tintin/SS_Halimeda/runs", run)
