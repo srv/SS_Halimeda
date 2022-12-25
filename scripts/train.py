@@ -16,10 +16,10 @@ IMG_WIDTH = 1024
 IMG_HEIGHT = 1024
 IMG_CHANNELS = 3
 
-TRAIN_images_PATH = "/home/tintin/SS_Halimeda/data/splits/test/train/img"
-TRAIN_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/test/train/mask"
-VAL_images_PATH = "/home/tintin/SS_Halimeda/data/splits/test/val/img"
-VAL_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/test/val/mask"
+TRAIN_images_PATH = "/home/tintin/SS_Halimeda/data/splits/base/train/img"
+TRAIN_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/train/mask"
+VAL_images_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/img"
+VAL_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/mask"
 
 TEST_SPLIT=0.1
 test_list=[]
@@ -153,7 +153,7 @@ checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_bes
 callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=save_path)]
 
 print("training")
-results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=8, epochs=2, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=8, epochs=300, callbacks=callbacks)
 
 tf.keras.models.save_model(model,os.path.join(save_path, "model.h5"))
 
