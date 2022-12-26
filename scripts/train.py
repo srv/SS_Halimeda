@@ -19,24 +19,10 @@ TRAIN_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/train/mask"
 VAL_images_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/img"
 VAL_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/mask"
 
-TEST_SPLIT=0.1
-test_list=[]
-
 train_images_list = sorted(os.listdir(TRAIN_images_PATH))
 train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
 val_images_list = sorted(os.listdir(VAL_images_PATH))
 val_masks_list = sorted(os.listdir(VAL_masks_PATH))
-
-# select test set randomly  
-# TODO cambiar a test fijo y val fija para poder ahcer kfold
-
-test_set_len=int(TEST_SPLIT*len(train_images_list))
-for i in range(test_set_len):
-
-    idx=random.randint(0, len(train_images_list)-1)
-    test_list.append(train_images_list[idx])
-    train_images_list.pop(idx)
-    train_masks_list.pop(idx)
 
 # train images and masks
 X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
@@ -55,7 +41,6 @@ for n, id_ in enumerate(train_masks_list):
     Y_train[n] = mask
 np.save(os.path.join(save_path, "Xtrain"),X_train)
 np.save(os.path.join(save_path, "Ytrain"),Y_train)
-
 
 # val images and masks
 X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
