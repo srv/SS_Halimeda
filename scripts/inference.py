@@ -1,18 +1,19 @@
 import os
 import cv2
 import numpy as np
+from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 
-IMG_WIDTH = 1024
-IMG_HEIGHT = 1024
+IMG_WIDTH = 512
+IMG_HEIGHT = 512
 IMG_CHANNELS = 3
 
-run = "1024_8_default"
-save_path = os.path.join("/home/tintin/SS_Halimeda/runs", run)
+run = "1024_8_default2"
+save_path = os.path.join("/home/object/SS_Halimeda/runs", run)
 
-TEST_PATH = "/home/tintin/SS_Halimeda/data/splits/base/test/img"
+TEST_PATH = "/home/object/SS_Halimeda/data/splits/base/test/img"
 
 test_list = sorted(os.listdir(TEST_PATH))
 
@@ -27,15 +28,17 @@ for n, id_ in enumerate(test_list):
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
+#device = cuda.get_current_device()
+#device.reset()
+
 print("Starting inference")
 preds_test = model.predict(X_test, verbose=1)
 print("INFERENCE DONE")
 
-path_im_out = os.path.join(save_path, "inference_out/grey")
+path_im_out = os.path.join(save_path, "inference")
 
 try:
     os.mkdir(path_im_out)
-    os.mkdir(path_thr_out)
 except:
     print("")
 

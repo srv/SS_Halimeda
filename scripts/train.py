@@ -76,8 +76,8 @@ if load == 1:
     X_val=np.load(os.path.join(save_path, "Xval.npy"),allow_pickle=True)
     Y_val=np.load(os.path.join(save_path, "Yval.npy"),allow_pickle=True)
 
-    device = cuda.get_current_device()
-    device.reset()
+device = cuda.get_current_device()
+device.reset()
 
 #Build the model
 inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
