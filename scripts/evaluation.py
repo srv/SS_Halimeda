@@ -1,6 +1,8 @@
 import os
 import cv2
 import numpy as np
+from sklearn import metrics
+import matplotlib.pyplot as plt
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 
@@ -26,28 +28,36 @@ for n, id_ in enumerate(mask_list):
     img = imread(path)
     mask[n] = img
 
-acc_list = list()
-prec_list = list()
-rec_list = list()
-fallout_list = list()
-f1_list = list()
-matrix_list = list()
+grey_flat = grey.flatten()
+mask_flat = mask.flatten()
+zeros = np.count_nonzero(mask_flat == 0)
+ones = np.count_nonzero(mask_flat == 1)
 
-for thr in range(256):
+fp, tp, thr = metrics.roc_curve(mask_flat,grey_flat)
+fn = ones-tp
+tn = zeros - fp
 
-    grey_t = (grey > thr)
+#plt.plot(fp,tp)
+#plt.ylabel('True Positive Rate')
+#plt.xlabel('False Positive Rate')
+#plt.show()
 
-    for idx in range(len(grey_list)):
-        # compare grey_t[idx] con maks[idx]
-        # ir generando conf matrix
-    # append matrix
-    # calcular acc prec rec fall f1
-    # append acc prec rec fall f1
+acc = (tp+tn)/(zeros+ones)
+prec = (tp)/(tp+fp)
+rec = (tp)/(ones)
+fallout = (fp)/(zeros)
+f1 = 2*((prec*rec)/(prec+rec))
 
-# select best metrics -> best thr
 
-# flaten grey and mask
-# roc_auc = sklearn.metrics.roc_auc_score(y_true, y_score)
+thr_best = np.argmax(f1)
+acc_best = acc[thr_best]
+prec_best = prec[thr_best]
+rec_best = rec[thr_best]
+fallout_best = fallout[thr_best]
+f1_best = f1[thr_best]
+roc_auc = sklearn.metrics.roc_auc_score(y_true, y_score) #  shape (n_samples,)
+
+
 
 
  
