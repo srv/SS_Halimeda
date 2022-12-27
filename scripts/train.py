@@ -1,38 +1,49 @@
 import os
-import cv2
-import random
+import argparse
 import numpy as np
 from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow
 
-run = "1024_8_default2"
-save_path = os.path.join("/home/object/SS_Halimeda/runs", run)
+parser = argparse.ArgumentParser()
+parser.add_argument('--run_path', help='Path to the save folder', type=str)
+parser.add_argument('--data_path', help='Path to the data folder', type=str)
+parser.add_argument('--batch', help='batch size', type=int)
+parser.add_argument('--shape', help='img_shape', type=int)
+parser.add_argument('--learning', help='learning rate', default= 0.001, type=float)
+parsed_args = parser.parse_args()
+
+run_path = parsed_args.run_path
+data_path = parsed_args.data_path
+batch = parsed_args.batch
+shape = parsed_args.shape
+learning = parsed_args.learning
 
 try:
-    os.mkdir(save_path)
+    os.mkdir(run_path)
 except:
     print("")
 
-
-IMG_WIDTH = 1024
-IMG_HEIGHT = 1024
+IMG_WIDTH = shape
+IMG_HEIGHT = shape
 IMG_CHANNELS = 3
 
-TRAIN_images_PATH = "/home/object/SS_Halimeda/data/splits/base/train/img"
-TRAIN_masks_PATH = "/home/object/SS_Halimeda/data/splits/base/train/mask"
-VAL_images_PATH = "/home/object/SS_Halimeda/data/splits/base/val/img"
-VAL_masks_PATH = "/home/object/SS_Halimeda/data/splits/base/val/mask"
+load = os.path.exists(os.path.join(data_path, "Xtrain_"+str(shape)+".npy"))
 
-train_images_list = sorted(os.listdir(TRAIN_images_PATH))
-train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
-val_images_list = sorted(os.listdir(VAL_images_PATH))
-val_masks_list = sorted(os.listdir(VAL_masks_PATH))
+if load == False:
 
-load = 1
+    TRAIN_images_PATH = os.path.join(data_path, "train/img")
+    TRAIN_masks_PATH =  os.path.join(data_path, "train/mask")
+    VAL_images_PATH =   os.path.join(data_path, "val/img")
+    VAL_masks_PATH =    os.path.join(data_path, "val/mask")
 
-if load == 0:
+    train_images_list = sorted(os.listdir(TRAIN_images_PATH))
+    train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
+    val_images_list = sorted(os.listdir(VAL_images_PATH))
+    val_masks_list = sorted(os.listdir(VAL_masks_PATH))
+
+
     # train images and masks
     X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
     print('Loading train images') 
@@ -48,8 +59,8 @@ if load == 0:
         mask = imread(path)[:,:,:1]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_train[n] = mask
-    np.save(os.path.join(save_path, "Xtrain"),X_train)
-    np.save(os.path.join(save_path, "Ytrain"),Y_train)
+    np.save(os.path.join(data_path, "Xtrain"+str(shape)),X_train)
+    np.save(os.path.join(data_path, "Ytrain")+str(shape),Y_train)
 
     # val images and masks
     X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
@@ -66,15 +77,15 @@ if load == 0:
         mask = imread(path)[:,:,:1]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_val[n] = mask
-    np.save(os.path.join(save_path, "Xval"),X_val)
-    np.save(os.path.join(save_path, "Yval"),Y_val)
+    np.save(os.path.join(data_path, "Xval"+str(shape)),X_val)
+    np.save(os.path.join(data_path, "Yval"+str(shape)),Y_val)
 
-if load == 1:
+if load == True:
     print('Loading numpys') 
-    X_train=np.load(os.path.join(save_path, "Xtrain.npy"),allow_pickle=True)
-    Y_train=np.load(os.path.join(save_path, "Ytrain.npy"),allow_pickle=True)
-    X_val=np.load(os.path.join(save_path, "Xval.npy"),allow_pickle=True)
-    Y_val=np.load(os.path.join(save_path, "Yval.npy"),allow_pickle=True)
+    X_train=np.load(os.path.join(data_path, "Xtrain_"+str(shape)+".npy"),allow_pickle=True)
+    Y_train=np.load(os.path.join(data_path, "Ytrain_"+str(shape)+".npy"),allow_pickle=True)
+    X_val=np.load(os.path.join(data_path, "Xval_"+str(shape)+".npy"),allow_pickle=True)
+    Y_val=np.load(os.path.join(data_path, "Yval_"+str(shape)+".npy"),allow_pickle=True)
 
 device = cuda.get_current_device()
 device.reset()
@@ -135,21 +146,19 @@ outputs = tf.keras.layers.Conv2D(1,(1,1), activation='sigmoid')(c9) # binary act
  
 model = tf.keras.Model(inputs=[inputs], outputs=[outputs])
 
-# model.compile(optimizer=Adam(LEARNING_RATE), loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
-# model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=1e-6), loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
-model.compile(optimizer= 'Adam', loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
+model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=learning), loss='binary_crossentropy', metrics=['accuracy', 'mse', 'mae', 'mape','Precision','Recall'])
 
 model.summary()
 
 #save checkpoints
 checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_best_only=False) # TODO check que hace, estaba en True
 
-callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=save_path)]
+callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=run_path)]
 
 print("training")
-results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=300, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=batch, epochs=300, callbacks=callbacks)
 
-tf.keras.models.save_model(model,os.path.join(save_path, "model.h5"))
+tf.keras.models.save_model(model,os.path.join(run_path, "model.h5"))
 
 
 
