@@ -7,66 +7,77 @@ import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow
 
-run = "1024_8_default"
-save_path = os.path.join("/home/tintin/SS_Halimeda/runs", run)
+run = "1024_8_default2"
+save_path = os.path.join("/home/object/SS_Halimeda/runs", run)
+
+try:
+    os.mkdir(save_path)
+except:
+    print("")
+
 
 IMG_WIDTH = 1024
 IMG_HEIGHT = 1024
 IMG_CHANNELS = 3
 
-TRAIN_images_PATH = "/home/tintin/SS_Halimeda/data/splits/base/train/img"
-TRAIN_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/train/mask"
-VAL_images_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/img"
-VAL_masks_PATH = "/home/tintin/SS_Halimeda/data/splits/base/val/mask"
+TRAIN_images_PATH = "/home/object/SS_Halimeda/data/splits/base/train/img"
+TRAIN_masks_PATH = "/home/object/SS_Halimeda/data/splits/base/train/mask"
+VAL_images_PATH = "/home/object/SS_Halimeda/data/splits/base/val/img"
+VAL_masks_PATH = "/home/object/SS_Halimeda/data/splits/base/val/mask"
 
 train_images_list = sorted(os.listdir(TRAIN_images_PATH))
 train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
 val_images_list = sorted(os.listdir(VAL_images_PATH))
 val_masks_list = sorted(os.listdir(VAL_masks_PATH))
 
-# train images and masks
-X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-print('Loading train images') 
-for n, id_ in enumerate(train_images_list):
-    path = os.path.join(TRAIN_images_PATH, id_)
-    img = imread(path)[:,:,:IMG_CHANNELS]
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-    X_train[n] = img
-Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
-print('Loading masks images') 
-for n, id_ in enumerate(train_masks_list):
-    path = os.path.join(TRAIN_masks_PATH, id_)
-    mask = imread(path)[:,:,:1]
-    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
-    Y_train[n] = mask
-np.save(os.path.join(save_path, "Xtrain"),X_train)
-np.save(os.path.join(save_path, "Ytrain"),Y_train)
+load = 1
 
-# val images and masks
-X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-print('Loading val images') 
-for n, id_ in enumerate(val_images_list):
-    path = os.path.join(VAL_images_PATH, id_)
-    img = imread(path)[:,:,:IMG_CHANNELS]
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-    X_val[n] = img
-Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
-print('Loading masks images') 
-for n, id_ in enumerate(val_masks_list):
-    path = os.path.join(VAL_masks_PATH, id_)
-    mask = imread(path)[:,:,:1]
-    mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
-    Y_val[n] = mask
-np.save(os.path.join(save_path, "Xval"),X_val)
-np.save(os.path.join(save_path, "Yval"),Y_val)
+if load == 0:
+    # train images and masks
+    X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+    print('Loading train images') 
+    for n, id_ in enumerate(train_images_list):
+        path = os.path.join(TRAIN_images_PATH, id_)
+        img = imread(path)[:,:,:IMG_CHANNELS]
+        img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+        X_train[n] = img
+    Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
+    print('Loading masks images') 
+    for n, id_ in enumerate(train_masks_list):
+        path = os.path.join(TRAIN_masks_PATH, id_)
+        mask = imread(path)[:,:,:1]
+        mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+        Y_train[n] = mask
+    np.save(os.path.join(save_path, "Xtrain"),X_train)
+    np.save(os.path.join(save_path, "Ytrain"),Y_train)
 
-#X_train=np.load(os.path.join(save_path, "Xtrain.npy"),allow_pickle=True)
-#Y_train=np.load(os.path.join(save_path, "Ytrain.npy"),allow_pickle=True)
-#X_val=np.load(os.path.join(save_path, "Xval.npy"),allow_pickle=True)
-#Y_val=np.load(os.path.join(save_path, "Yval.npy"),allow_pickle=True)
+    # val images and masks
+    X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
+    print('Loading val images') 
+    for n, id_ in enumerate(val_images_list):
+        path = os.path.join(VAL_images_PATH, id_)
+        img = imread(path)[:,:,:IMG_CHANNELS]
+        img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+        X_val[n] = img
+    Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
+    print('Loading masks images') 
+    for n, id_ in enumerate(val_masks_list):
+        path = os.path.join(VAL_masks_PATH, id_)
+        mask = imread(path)[:,:,:1]
+        mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+        Y_val[n] = mask
+    np.save(os.path.join(save_path, "Xval"),X_val)
+    np.save(os.path.join(save_path, "Yval"),Y_val)
 
-#device = cuda.get_current_device()
-#device.reset()
+if load == 1:
+    print('Loading numpys') 
+    X_train=np.load(os.path.join(save_path, "Xtrain.npy"),allow_pickle=True)
+    Y_train=np.load(os.path.join(save_path, "Ytrain.npy"),allow_pickle=True)
+    X_val=np.load(os.path.join(save_path, "Xval.npy"),allow_pickle=True)
+    Y_val=np.load(os.path.join(save_path, "Yval.npy"),allow_pickle=True)
+
+    device = cuda.get_current_device()
+    device.reset()
 
 #Build the model
 inputs = tf.keras.layers.Input((IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
@@ -136,7 +147,7 @@ checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_bes
 callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=save_path)]
 
 print("training")
-results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=8, epochs=300, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=1, epochs=300, callbacks=callbacks)
 
 tf.keras.models.save_model(model,os.path.join(save_path, "model.h5"))
 
