@@ -1,24 +1,36 @@
 import os
-import cv2
+import argparse
 import numpy as np
 from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 
-IMG_WIDTH = 512
-IMG_HEIGHT = 512
+parser = argparse.ArgumentParser()
+parser.add_argument('--run_path', help='Path to the run folder', type=str)
+parser.add_argument('--data_path', help='Path to the data folder', type=str)
+parser.add_argument('--shape', help='img_shape', type=int)
+parsed_args = parser.parse_args()
+
+run_path = parsed_args.run_path
+data_path = parsed_args.data_path
+shape = parsed_args.shape
+
+
+IMG_WIDTH = shape
+IMG_HEIGHT = shape
 IMG_CHANNELS = 3
 
-run = "1024_8_default2"
-save_path = os.path.join("/home/object/SS_Halimeda/runs", run)
+save_path = os.path.join(run_path, "inference")
 
-TEST_PATH = "/home/object/SS_Halimeda/data/splits/base/test/img"
+try:
+    os.mkdir(save_path)
+except:
+    print("")
+
+TEST_PATH = data_path
 
 test_list = sorted(os.listdir(TEST_PATH))
-
-
-model = tf.keras.models.load_model(os.path.join(save_path, "model.h5"))
 
 X_test = np.zeros((len(test_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
 print('Loading test images') 
@@ -28,23 +40,18 @@ for n, id_ in enumerate(test_list):
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
-#device = cuda.get_current_device()
-#device.reset()
+device = cuda.get_current_device()
+device.reset()
+model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
 
 print("Starting inference")
 preds_test = model.predict(X_test, verbose=1)
 print("INFERENCE DONE")
 
-path_im_out = os.path.join(save_path, "inference")
-
-try:
-    os.mkdir(path_im_out)
-except:
-    print("")
 
 for idx, name in enumerate(test_list):
 
     base, ext = os.path.splitext(name)
-    imsave(os.path.join(path_im_out, name), np.squeeze(X_test[idx]))
-    imsave(os.path.join(path_im_out, base + "_grey" + ext), np.squeeze(preds_test[idx]))
+    #imsave(os.path.join(save_path, name), np.squeeze(X_test[idx]))
+    imsave(os.path.join(save_path, base + "_grey" + ext), np.squeeze(preds_test[idx]))
 

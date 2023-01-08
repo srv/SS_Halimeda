@@ -7,7 +7,7 @@ from skimage.transform import resize
 from skimage.io import imread, imshow
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--run_path', help='Path to the save folder', type=str)
+parser.add_argument('--run_path', help='Path to the run folder', type=str)
 parser.add_argument('--data_path', help='Path to the data folder', type=str)
 parser.add_argument('--batch', help='batch size', type=int)
 parser.add_argument('--shape', help='img_shape', type=int)
@@ -59,8 +59,8 @@ if load == False:
         mask = imread(path)[:,:,:1]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_train[n] = mask
-    np.save(os.path.join(data_path, "Xtrain"+str(shape)),X_train)
-    np.save(os.path.join(data_path, "Ytrain")+str(shape),Y_train)
+    np.save(os.path.join(data_path, "Xtrain_"+str(shape)),X_train)
+    np.save(os.path.join(data_path, "Ytrain_")+str(shape),Y_train)
 
     # val images and masks
     X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
@@ -77,8 +77,8 @@ if load == False:
         mask = imread(path)[:,:,:1]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_val[n] = mask
-    np.save(os.path.join(data_path, "Xval"+str(shape)),X_val)
-    np.save(os.path.join(data_path, "Yval"+str(shape)),Y_val)
+    np.save(os.path.join(data_path, "Xval_"+str(shape)),X_val)
+    np.save(os.path.join(data_path, "Yval_"+str(shape)),Y_val)
 
 if load == True:
     print('Loading numpys') 
@@ -151,9 +151,9 @@ model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=learning), loss=
 model.summary()
 
 #save checkpoints
-checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_best_only=False) # TODO check que hace, estaba en True
+checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_best_only=True) 
 
-callbacks = [tf.keras.callbacks.EarlyStopping(patience=20, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=run_path)]
+callbacks = [tf.keras.callbacks.EarlyStopping(patience=30, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=run_path)]
 
 print("training")
 results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=batch, epochs=300, callbacks=callbacks)
