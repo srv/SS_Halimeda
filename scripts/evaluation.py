@@ -89,14 +89,6 @@ rec_best = recall_list[thr_best]
 fallout_best = fallout_list[thr_best]
 f1_best = f1_list[thr_best]
 
-print(thr_best)
-print(acc_best)
-print(prec_best)
-print(rec_best)
-print(fallout_best)
-print(f1_best)
-print(roc_auc)
-
 save_path = os.path.join(run_path, "metrics")
 
 try:
