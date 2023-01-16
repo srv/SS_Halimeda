@@ -262,3 +262,46 @@ python3 train.py --run_path "../runs/cross/1024_3_000033_j" --data_path "../data
 
 
 
+python3 inference.py --run_path "../runs/cross/512_12_000033_a" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_b" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_c" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_d" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_e" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_f" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_g" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_h" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_i" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/512_12_000033_j" --data_path "../data/splits/cross/test/img" --shape 512 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_a" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_b" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_c" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_d" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_e" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_f" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_g" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_h" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_i" --data_path "../data/splits/cross/test/img" --shape 1024 && 
+python3 inference.py --run_path "../runs/cross/1024_3_000033_j" --data_path "../data/splits/cross/test/img" --shape 1024
+
+
+
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_a" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_b" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_c" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_d" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_e" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_f" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_g" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_h" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_i" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/512_12_000033_j" --mask_path "../data/splits/cross/test/mask" --shape 512 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_a" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_b" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_c" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_d" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_e" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_f" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_g" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_h" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_i" --mask_path "../data/splits/cross/test/mask" --shape 1024 && 
+python3 evaluation.py --run_path "../runs/cross/1024_3_000033_j" --mask_path "../data/splits/cross/test/mask" --shape 1024
