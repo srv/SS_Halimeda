@@ -11,14 +11,14 @@ parser.add_argument('--run_path', help='Path to the run folder', type=str)
 parser.add_argument('--data_path', help='Path to the data folder', type=str)
 parser.add_argument('--batch', help='batch size', type=int)
 parser.add_argument('--shape', help='img_shape', type=int)
-parser.add_argument('--learning', help='learning rate', default= 0.001, type=float)
+parser.add_argument('--learning', help='learning rate', default= 0.001)
 parsed_args = parser.parse_args()
 
 run_path = parsed_args.run_path
 data_path = parsed_args.data_path
 batch = parsed_args.batch
 shape = parsed_args.shape
-learning = parsed_args.learning
+learning = float(parsed_args.learning)
 
 try:
     os.mkdir(run_path)

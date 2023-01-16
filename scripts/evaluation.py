@@ -62,7 +62,10 @@ fallout_list = list()
 accuracy_list =  list()
 f1_list = list()
 
-for thr in tqdm(ange(256)): 
+#thr_list = [100,150]
+max_grey = np.max(grey_flat)
+
+for thr in tqdm(range(1, max_grey)):  # range(1, max_grey)
 
     bw_flat = np.where(grey_flat>thr, 1, 0)
 
