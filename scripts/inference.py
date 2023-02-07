@@ -10,12 +10,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--run_path', help='Path to the run folder', type=str)
 parser.add_argument('--data_path', help='Path to the data folder', type=str)
 parser.add_argument('--shape', help='img_shape', type=int)
+parser.add_argument('--shape_out', default = 0, help='img_shape_out', type=int)
 parsed_args = parser.parse_args()
 
 run_path = parsed_args.run_path
 data_path = parsed_args.data_path
 shape = parsed_args.shape
-
+shape_out = parsed_args.shape_out
 
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
@@ -53,5 +54,10 @@ for idx, name in enumerate(test_list):
 
     base, ext = os.path.splitext(name)
     #imsave(os.path.join(save_path, name), np.squeeze(X_test[idx]))
-    imsave(os.path.join(save_path, base + "_grey" + ext), np.squeeze(preds_test[idx]))
+    img = np.squeeze(preds_test[idx])
+    if shape_out != 0:
+        img = resize(img, (shape_out, shape_out), mode='constant', preserve_range=True)
+
+
+    imsave(os.path.join(save_path, base + "_grey" + ext), img)
 

@@ -45,6 +45,7 @@ for n, id_ in enumerate(mask_list):
 
 grey_flat = grey.flatten()
 mask_flat = mask.flatten()
+mask_flat = np.where(mask_flat>100, 1, 0)
 zeros = np.count_nonzero(mask_flat == 0)
 ones = np.count_nonzero(mask_flat == 1)
 

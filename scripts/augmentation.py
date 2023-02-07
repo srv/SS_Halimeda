@@ -8,8 +8,8 @@ from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-path_in = "/home/tintin/SS_Halimeda/data/splits/da/train/"
-path_out = "/home/tintin/SS_Halimeda/data/splits/da/train_da/"
+path_in = "/home/object/SS_Halimeda/data/splits/cross2/a/train/"
+path_out = "/home/object/SS_Halimeda/data/splits/cross2/a_da/train/"
 
 
 path_out_img= os.path.join(path_out + "img")
@@ -38,17 +38,25 @@ for image_file in os.listdir(path_in_img):
     image=np.expand_dims(image,axis=0)
     mask=np.expand_dims(mask,axis=0)
 
-    datagen = ImageDataGenerator(rotation_range=30,width_shift_range=0.2,height_shift_range=0.2,shear_range=0.3,zoom_range=0.25,horizontal_flip=True,fill_mode='reflect')
+    datagen = ImageDataGenerator(rotation_range=20,width_shift_range=0.1,height_shift_range=0.1,shear_range=0.15,zoom_range=0.15,horizontal_flip=True,fill_mode='reflect')
     #datagen = ImageDataGenerator(rotation_range=50,width_shift_range=0.5,height_shift_range=0.5,shear_range=0.5,zoom_range=0.5,horizontal_flip=True,fill_mode='reflect')
-        
-    aug_iter_img = datagen.flow(image, batch_size=1, seed=s)
-    image_aug = next(aug_iter_img)[0].astype('uint8')
+    
+    a = random.randint(0, 4)	
+    if a < 4:
+        aug_iter_img = datagen.flow(image, batch_size=1, seed=s)
+        image = next(aug_iter_img)[0].astype('uint8')
 
-    aug_iter_mask = datagen.flow(mask, batch_size=1, seed=s)
-    mask_aug = next(aug_iter_mask)[0].astype('uint8')
+        aug_iter_mask = datagen.flow(mask, batch_size=1, seed=s)
+        mask = next(aug_iter_mask)[0].astype('uint8')
 
-    save_img(os.path.join(path_out_img, name + "_da" + ext), image_aug)
-    save_img(os.path.join(path_out_mask, name + "_da_gt" + ext), mask_aug)
+    else:
+        image = image.astype('uint8')
+        mask = mask.astype('uint8')
+        image = image[0,:,:,:]
+        mask = mask[0,:,:,:]
+
+    save_img(os.path.join(path_out_img, name + "_da" + ext), image)
+    save_img(os.path.join(path_out_mask, name + "_da_gt" + ext), mask)
 
 
 
