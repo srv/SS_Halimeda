@@ -10,47 +10,55 @@ from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 
 
+'''
+CALL
+python --run_name name --pred_path path/to/pred --pred_path path/to/out --gt_path path/to/gt --shape shape
+'''
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('--run_path', help='Path to the run folder', type=str)
-parser.add_argument('--mask_path', help='Path to the mask folder', type=str)
+parser.add_argument('--run_name', help='Path to the run folder', type=str)
+parser.add_argument('--pred_path', help='Path to the pred folder', type=str)
+parser.add_argument('--out_path', help='Path to the out folder', type=str)
+parser.add_argument('--gt_path', help='Path to the gt folder', type=str)
 parser.add_argument('--shape', help='img_shape', type=int)
 parsed_args = parser.parse_args()
 
-run_path = parsed_args.run_path
-mask_path = parsed_args.mask_path
+run_name = parsed_args.run_name
+out_path = parsed_args.out_path
+pred_path = parsed_args.pred_path
+gt_path = parsed_args.gt_path
 shape = parsed_args.shape
 
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
 
-path_grey = os.path.join(run_path,"inference/")
-
-grey_list = sorted(os.listdir(path_grey))
-img = imread(os.path.join(path_grey, grey_list[0]))
+grey_list = sorted(os.listdir(pred_path))
+img = imread(os.path.join(pred_path, grey_list[0]))
 
 grey = np.zeros((len(grey_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(grey_list):
-    path = os.path.join(path_grey, id_)
+    path = os.path.join(pred_path, id_)
     img = imread(path, as_gray = True)
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     grey[n] = img
 
-mask_list = sorted(os.listdir(mask_path))
-mask = np.zeros((len(mask_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
-for n, id_ in enumerate(mask_list):
-    path = os.path.join(mask_path, id_)
+gt_list = sorted(os.listdir(gt_path))
+gt = np.zeros((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+for n, id_ in enumerate(gt_list):
+    path = os.path.join(gt_path, id_)
     img = imread(path,as_gray = True)
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-    mask[n] = img
+    gt[n] = img
 
 grey_flat = grey.flatten()
-mask_flat = mask.flatten()
-mask_flat = np.where(mask_flat>100, 1, 0)
-zeros = np.count_nonzero(mask_flat == 0)
-ones = np.count_nonzero(mask_flat == 1)
+gt_flat = gt.flatten()
+gt_flat = np.where(gt_flat>100, 1, 0)
+zeros = np.count_nonzero(gt_flat == 0)
+ones = np.count_nonzero(gt_flat == 1)
 
-fp, tp, thr = metrics.roc_curve(mask_flat,grey_flat)
-roc_auc = metrics.roc_auc_score(mask_flat, grey_flat) #  shape (n_samples,)
+fp, tp, thr = metrics.roc_curve(gt_flat,grey_flat)
+roc_auc = metrics.roc_auc_score(gt_flat, grey_flat) #  shape (n_samples,)
 
 #plt.plot(fp,tp)
 #plt.ylabel('True Positive Rate')
@@ -70,7 +78,7 @@ for thr in tqdm(range(1, max_grey)):  # range(1, max_grey)
 
     bw_flat = np.where(grey_flat>thr, 1, 0)
 
-    TN, FP, FN, TP = metrics.confusion_matrix(mask_flat,bw_flat).ravel()
+    TN, FP, FN, TP = metrics.confusion_matrix(gt_flat,bw_flat).ravel()
 
     recall = TP/(TP+FN)
     precision = TP/(TP+FP)
@@ -93,14 +101,12 @@ rec_best = recall_list[thr_best]
 fallout_best = fallout_list[thr_best]
 f1_best = f1_list[thr_best]
 
-save_path = os.path.join(run_path, "metrics")
+save_path = os.path.join(out_path, "metrics")
 
 try:
     os.mkdir(save_path)
 except:
     print("")
-
-run_name = os.path.basename(os.path.normpath(run_path))
 
 
 data = {'Run': [run_name], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best], 'auc': [roc_auc]}
