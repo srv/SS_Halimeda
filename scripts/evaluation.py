@@ -10,6 +10,14 @@ from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
 
 
+"""
+
+python /mnt/c/Users/haddo/DL_stack/SS_Halimeda/scripts/evaluation.py --run_path /mnt/c/Users/haddo/DL_stack/Halimeda/combined_model/inference_test/inference_SS/all_test \
+                    --mask_path  /mnt/c/Users/haddo/DL_stack/Halimeda/combined_model/gt_test/all/ \
+                    --shape 1024
+
+"""
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_path', help='Path to the run folder', type=str)
 parser.add_argument('--mask_path', help='Path to the mask folder', type=str)
@@ -23,7 +31,8 @@ shape = parsed_args.shape
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
 
-path_grey = os.path.join(run_path,"inference/")
+# path_grey = os.path.join(run_path,"inference/")
+path_grey = run_path
 
 grey_list = sorted(os.listdir(path_grey))
 img = imread(os.path.join(path_grey, grey_list[0]))
@@ -45,9 +54,9 @@ for n, id_ in enumerate(mask_list):
 
 grey_flat = grey.flatten()
 mask_flat = mask.flatten()
+original_mask_set=set(mask_flat)
+
 mask_flat = np.where(mask_flat>100, 1, 0)
-zeros = np.count_nonzero(mask_flat == 0)
-ones = np.count_nonzero(mask_flat == 1)
 
 fp, tp, thr = metrics.roc_curve(mask_flat,grey_flat)
 roc_auc = metrics.roc_auc_score(mask_flat, grey_flat) #  shape (n_samples,)

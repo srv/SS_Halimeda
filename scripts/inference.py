@@ -1,10 +1,18 @@
 import os
 import argparse
 import numpy as np
-from numba import cuda
+# from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
+
+"""
+command = "python3 inference.py --run_path /mnt/c/Users/haddo/DL_stack/SS_Halimeda/model/ \
+                                --data_path  /mnt/c/Users/haddo/DL_stack/Halimeda/combined_model/data/test/all/\
+                                --shape 1024 "
+"""
+
+save_path = "/mnt/c/Users/haddo/DL_stack/Halimeda/combined_model/inference_test/inference_SS/all_test"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_path', help='Path to the run folder', type=str)
@@ -22,7 +30,9 @@ IMG_WIDTH = shape
 IMG_HEIGHT = shape
 IMG_CHANNELS = 3
 
-save_path = os.path.join(run_path, "inference")
+# save_path = os.path.join(run_path, "inference")
+
+
 
 try:
     os.mkdir(save_path)
@@ -41,8 +51,8 @@ for n, id_ in enumerate(test_list):
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
-device = cuda.get_current_device()
-device.reset()
+# device = cuda.get_current_device()
+# device.reset()
 model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
 
 print("Starting inference")
