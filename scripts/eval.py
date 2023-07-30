@@ -113,7 +113,7 @@ fallout_best = fallout_list[thr_best]
 f1_best = f1_list[thr_best]
 acc_best = accuracy_list[thr_best]
 
-save_path = os.path.join(path_out, "metrics_test")
+save_path = os.path.join(path_out, "metrics")
 
 try:
     os.mkdir(save_path)
