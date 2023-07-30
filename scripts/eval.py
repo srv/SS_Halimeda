@@ -9,7 +9,7 @@ from natsort import natsorted
 
 '''
 CALL:
-python3 matrix.py --run_name 000033 --path_pred ../runs/1/000033/inference --path_out ../runs/1/000033/ --path_gt ../data/test/mask
+python3 eval.py --run_name 000033 --path_pred ../runs/1/000033/inference --path_out ../runs/1/000033/ --path_gt ../data/test/mask
 '''
 
 path_pred = "/home/olivia/Halimeda/semantic_segmentation/SS_Halimeda/runs/1/000033/inference"
