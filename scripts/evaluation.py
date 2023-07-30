@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from sklearn import metrics
+from natsort import natsorted
 import matplotlib.pyplot as plt
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
@@ -33,32 +34,40 @@ shape = parsed_args.shape
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
 
-grey_list = sorted(os.listdir(pred_path))
-img = imread(os.path.join(pred_path, grey_list[0]))
-
+print("loadig preds from: " + str(pred_path))
+grey_list = natsorted(os.listdir(pred_path))
 grey = np.zeros((len(grey_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(grey_list):
     path = os.path.join(pred_path, id_)
     img = imread(path, as_gray = True)
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    #img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     grey[n] = img
 
-gt_list = sorted(os.listdir(gt_path))
+print("loadig gts from: " + str(gt_path))
+gt_list = natsorted(os.listdir(gt_path))
 gt = np.zeros((len(gt_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(gt_list):
     path = os.path.join(gt_path, id_)
     img = imread(path,as_gray = True)
-    img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    #img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     gt[n] = img
 
 grey_flat = grey.flatten()
 gt_flat = gt.flatten()
-gt_flat = np.where(gt_flat>100, 1, 0)
-zeros = np.count_nonzero(gt_flat == 0)
-ones = np.count_nonzero(gt_flat == 1)
 
-fp, tp, thr = metrics.roc_curve(gt_flat,grey_flat)
-roc_auc = metrics.roc_auc_score(gt_flat, grey_flat) #  shape (n_samples,)
+gt_flat = np.where(gt_flat>100, 1, 0)
+
+#grey_flat_norm = (grey_flat-np.min(grey_flat))/(np.max(grey_flat)-np.min(grey_flat))
+
+
+#fp, tp, thr = metrics.roc_curve(gt_flat, grey_flat)
+#roc_auc = metrics.roc_auc_score(gt_flat, grey_flat) #  shape (n_samples,)
+
+
+#print(fp)
+#print(tp)
+#print(thr)
+#print(roc_auc)
 
 #plt.plot(fp,tp)
 #plt.ylabel('True Positive Rate')
@@ -76,15 +85,23 @@ max_grey = np.max(grey_flat)
 
 for thr in tqdm(range(1, max_grey)):  # range(1, max_grey)
 
-    bw_flat = np.where(grey_flat>thr, 1, 0)
+    recall = 0   
+    precision = 0
+    fallout = 0
+    accuracy = 0
+    f1 = 0
 
-    TN, FP, FN, TP = metrics.confusion_matrix(gt_flat,bw_flat).ravel()
+    if thr == 127:
 
-    recall = TP/(TP+FN)
-    precision = TP/(TP+FP)
-    fallout = FP/(FP+TN)
-    accuracy = (TP+TN)/(TP+FP+FN+TN)
-    f1 = 2*((precision*recall)/(precision+recall))
+        bw_flat = np.where(grey_flat>thr, 1, 0)
+
+        TN, FP, FN, TP = metrics.confusion_matrix(gt_flat,bw_flat).ravel()
+
+        recall = TP/(TP+FN)
+        precision = TP/(TP+FP)
+        fallout = FP/(FP+TN)
+        accuracy = (TP+TN)/(TP+FP+FN+TN)
+        f1 = 2*((precision*recall)/(precision+recall))
 
     recall_list.append(recall)
     precision_list.append(precision)
@@ -101,7 +118,7 @@ rec_best = recall_list[thr_best]
 fallout_best = fallout_list[thr_best]
 f1_best = f1_list[thr_best]
 
-save_path = os.path.join(out_path, "metrics")
+save_path = os.path.join(out_path, "metrics_test")
 
 try:
     os.mkdir(save_path)
@@ -109,7 +126,7 @@ except:
     print("")
 
 
-data = {'Run': [run_name], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best], 'auc': [roc_auc]}
+data = {'Run': [run_name], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best]} #, 'auc': [roc_auc]}
 
 df = pd.DataFrame(data)
 print(df)

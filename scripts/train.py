@@ -43,7 +43,6 @@ if load == False:
     val_images_list = sorted(os.listdir(VAL_images_PATH))
     val_masks_list = sorted(os.listdir(VAL_masks_PATH))
 
-
     # train images and masks
     X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
     print('Loading train images') 
@@ -52,11 +51,16 @@ if load == False:
         img = imread(path)[:,:,:IMG_CHANNELS]
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         X_train[n] = img
+        
     Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
     for n, id_ in enumerate(train_masks_list):
         path = os.path.join(TRAIN_masks_PATH, id_)
-        mask = imread(path)[:,:,:1]
+        im = imread(path)
+        if len(im.shape) == 3:
+            mask = im[:,:,:1]
+        else:
+            mask = im[:,:, np.newaxis]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_train[n] = mask
     np.save(os.path.join(data_path, "Xtrain_"+str(shape)),X_train)
@@ -70,11 +74,16 @@ if load == False:
         img = imread(path)[:,:,:IMG_CHANNELS]
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         X_val[n] = img
+        
     Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
     for n, id_ in enumerate(val_masks_list):
         path = os.path.join(VAL_masks_PATH, id_)
-        mask = imread(path)[:,:,:1]
+        im = imread(path)
+        if len(im.shape) == 3:
+            mask = im[:,:,:1]
+        else:
+            mask = im[:,:, np.newaxis]
         mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
         Y_val[n] = mask
     np.save(os.path.join(data_path, "Xval_"+str(shape)),X_val)

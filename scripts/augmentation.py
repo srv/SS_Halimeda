@@ -8,12 +8,12 @@ from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-path_in = "/home/object/SS_Halimeda/data/splits/cross2/a/train/"
-path_out = "/home/object/SS_Halimeda/data/splits/cross2/a_da/train/"
+path_in = "/home/olivia/Halimeda/semantic_segmentation/SS_Halimeda/data/1/train"
+path_out = "/home/olivia/Halimeda/semantic_segmentation/SS_Halimeda/data_da/1_da/train"
 
 
-path_out_img= os.path.join(path_out + "img")
-path_out_mask= os.path.join(path_out + "mask")
+path_out_img= os.path.join(path_out, "img")
+path_out_mask= os.path.join(path_out, "mask")
 
 try:
     os.mkdir(path_out_img)
@@ -21,8 +21,8 @@ try:
 except:
     print("")
 
-path_in_img=  os.path.join(path_in + "img")
-path_in_mask= os.path.join(path_in + "mask")
+path_in_img=  os.path.join(path_in, "img")
+path_in_mask= os.path.join(path_in, "mask")
 
 for image_file in os.listdir(path_in_img):
 
