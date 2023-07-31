@@ -22,7 +22,7 @@ IMG_WIDTH = shape
 IMG_HEIGHT = shape
 IMG_CHANNELS = 3
 
-save_path = os.path.join(run_path, "inference")
+save_path = os.path.join(run_path, "inference_val")
 
 try:
     os.mkdir(save_path)

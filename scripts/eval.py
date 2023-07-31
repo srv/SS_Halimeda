@@ -11,9 +11,9 @@ from natsort import natsorted
 CALL:
 python3 eval.py --run_name 000033 --path_pred ../runs/1/000033/inference --path_out ../runs/1/000033/ --path_gt ../data/test/mask
 '''
+def conditional_div(a, b):
+    return a / b if b else 0
 
-path_pred = "/home/olivia/Halimeda/semantic_segmentation/SS_Halimeda/runs/1/000033/inference"
-path_gt = "/home/olivia/Halimeda/semantic_segmentation/SS_Halimeda/data/test/mask"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_name', help='Path to the run folder', type=str)
@@ -41,6 +41,8 @@ accuracy_list =  list()
 
 preds = list()
 gts = list()
+
+print("evaluating: " + path_out)
 
 
 
@@ -90,18 +92,17 @@ for thr in tqdm(range(255)):
     FP_TOTAL += int(FP)
     FN_TOTAL += int(FN)
         
-    precision = TP_TOTAL / (FP_TOTAL + TP_TOTAL)
-    recall = TP_TOTAL / (TP_TOTAL + FN_TOTAL)
-    fallout = FP_TOTAL/(FP_TOTAL+TN_TOTAL)
-
-    f1score = 2*(recall*precision)/(recall + precision)
-    accuracy = (TP_TOTAL + TN_TOTAL)/(TP_TOTAL + FP_TOTAL + TN_TOTAL + FN_TOTAL)
+    precision = conditional_div(TP_TOTAL, FP_TOTAL+TP_TOTAL)
+    recall = conditional_div(TP_TOTAL, TP_TOTAL+FN_TOTAL)
+    fallout = conditional_div(FP_TOTAL, FP_TOTAL+TN_TOTAL)
+    accuracy = conditional_div(TP_TOTAL+TN_TOTAL, TP_TOTAL+FP_TOTAL+TN_TOTAL+FN_TOTAL)
+    f1score = 2*conditional_div(recall*precision, recall+precision)
 
     precision_list.append(precision)
     recall_list.append(recall)
     fallout_list.append(fallout)
-    f1_list.append(f1score)
     accuracy_list.append(accuracy)
+    f1_list.append(f1score)
 
 
 
@@ -110,10 +111,10 @@ thr_best = np.nanargmax(f1_list)
 prec_best = precision_list[thr_best]
 rec_best = recall_list[thr_best]
 fallout_best = fallout_list[thr_best]
-f1_best = f1_list[thr_best]
 acc_best = accuracy_list[thr_best]
+f1_best = f1_list[thr_best]
 
-save_path = os.path.join(path_out, "metrics")
+save_path = os.path.join(path_out, "metrics_val")
 
 try:
     os.mkdir(save_path)
