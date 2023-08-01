@@ -1,10 +1,17 @@
 import os
 import argparse
 import numpy as np
-from numba import cuda
+# from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
+
+
+"""
+Example: 
+command = "python3 inference.py --run_path /mnt/c/Users/haddo/SS_Halimeda/model/ --data_path /mnt/c/Users/haddo/Halimeda/merged_model_0/val --shape 1024 "
+
+"""
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_path', help='Path to the run folder', type=str)
@@ -41,8 +48,8 @@ for n, id_ in enumerate(test_list):
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[n] = img
 
-device = cuda.get_current_device()
-device.reset()
+# device = cuda.get_current_device()
+# device.reset()
 model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
 
 print("Starting inference")
