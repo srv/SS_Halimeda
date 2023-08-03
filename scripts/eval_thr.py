@@ -6,13 +6,18 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn import metrics
 from natsort import natsorted
+from PIL import Image
+
 
 '''
 CALL:
 python3 eval.py --run_name 000033 --path_pred ../runs/1/000033/inference --path_out ../runs/1/000033/ --path_gt ../data/test/mask --name xxx
 '''
+
+
 def conditional_div(a, b):
     return a / b if b else 0
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_name', help='Path to the run folder', type=str)
@@ -20,6 +25,7 @@ parser.add_argument('--path_pred', help='Path to the pred folder', type=str)
 parser.add_argument('--path_out', help='Path to the out folder', type=str)
 parser.add_argument('--path_gt', help='Path to the gt folder', type=str)
 parser.add_argument('--name', help='eval name', type=str)
+parser.add_argument('--thr', help='thr', type=int)
 parsed_args = parser.parse_args()
 
 run_name = parsed_args.run_name
@@ -27,17 +33,14 @@ path_out = parsed_args.path_out
 path_pred = parsed_args.path_pred
 path_gt = parsed_args.path_gt
 name = parsed_args.name
+thr = parsed_args.thr
+
+thr2 = thr/255
 
 pred_list = natsorted(os.listdir(path_pred))
 gt_list = natsorted(os.listdir(path_gt))
 
 confMatrix=np.zeros((2,2))
-
-precision_list = list()
-recall_list = list()
-fallout_list = list()
-f1_list =  list()
-accuracy_list =  list()
 
 preds = list()
 gts = list()
@@ -66,7 +69,7 @@ for i in range(len(pred_list)):
 
     pred_flat = pred.flatten()
     gt_flat = gt.flatten()
-
+    
     preds_flat.append(pred_flat)
     gts_flat.append(gt_flat)
 
@@ -77,34 +80,15 @@ preds_flat_concat = preds_flat_concat/255
 gts_flat_concat = gts_flat_concat/255
 
 gts_flat_concat = np.where(gts_flat_concat>0.5, 1, 0)
+preds_flat_concat_bw =  np.where(preds_flat_concat>thr2, 1, 0)
 
-for thr in tqdm(range(255)):
+TN, FP, FN, TP = metrics.confusion_matrix(gts_flat_concat, preds_flat_concat_bw).ravel()
 
-    thr = thr/255
-
-    preds_flat_concat_bw =  np.where(preds_flat_concat>thr, 1, 0)
-
-    TN, FP, FN, TP = metrics.confusion_matrix(gts_flat_concat, preds_flat_concat_bw).ravel()
-
-    precision = conditional_div(TP, FP + TP)
-    recall = conditional_div(TP, TP + FN)
-    fallout = conditional_div(FP, FP + TN)
-    accuracy = conditional_div(TP + TN, TP + FP + TN + FN)
-    f1score = 2 * conditional_div(recall * precision, recall + precision)
-
-    precision_list.append(precision)
-    recall_list.append(recall)
-    fallout_list.append(fallout)
-    accuracy_list.append(accuracy)
-    f1_list.append(f1score)
-
-thr_best = np.nanargmax(f1_list)
-
-prec_best = precision_list[thr_best]
-rec_best = recall_list[thr_best]
-fallout_best = fallout_list[thr_best]
-acc_best = accuracy_list[thr_best]
-f1_best = f1_list[thr_best]
+precision = conditional_div(TP, FP + TP)
+recall = conditional_div(TP, TP + FN)
+fallout = conditional_div(FP, FP + TN)
+accuracy = conditional_div(TP + TN, TP + FP + TN + FN)
+f1score = 2 * conditional_div(recall * precision, recall + precision)
 
 save_path = os.path.join(path_out, "metrics_" + name)
 
@@ -113,8 +97,7 @@ try:
 except:
     print("")
 
-
-data = {'Run': [run_name], 'thr': [thr_best], 'acc': [acc_best], 'prec': [prec_best], 'rec': [rec_best], 'fall': [fallout_best], 'f1': [f1_best]} #, 'auc': [roc_auc]}
+data = {'Run': [run_name], 'thr': [thr], 'acc': [accuracy], 'prec': [precision], 'rec': [recall], 'fall': [fallout], 'f1': [f1score]} #, 'auc': [roc_auc]}
 
 df = pd.DataFrame(data)
 print(df)

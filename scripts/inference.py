@@ -11,18 +11,19 @@ parser.add_argument('--run_path', help='Path to the run folder', type=str)
 parser.add_argument('--data_path', help='Path to the data folder', type=str)
 parser.add_argument('--shape', help='img_shape', type=int)
 parser.add_argument('--shape_out', default = 0, help='img_shape_out', type=int)
+parser.add_argument('--name', help='eval name', type=str)
 parsed_args = parser.parse_args()
 
 run_path = parsed_args.run_path
 data_path = parsed_args.data_path
 shape = parsed_args.shape
-shape_out = parsed_args.shape_out
+shape_out = parsed_args.shape_outname = parsed_args.name
 
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
 IMG_CHANNELS = 3
 
-save_path = os.path.join(run_path, "inference_val")
+save_path = os.path.join(run_path, "inference_" + name)
 
 try:
     os.mkdir(save_path)
