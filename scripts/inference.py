@@ -17,7 +17,8 @@ parsed_args = parser.parse_args()
 run_path = parsed_args.run_path
 data_path = parsed_args.data_path
 shape = parsed_args.shape
-shape_out = parsed_args.shape_outname = parsed_args.name
+shape_out = parsed_args.shape_out
+name = parsed_args.name
 
 IMG_WIDTH = shape
 IMG_HEIGHT = shape
