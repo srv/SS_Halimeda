@@ -12,6 +12,19 @@ from PIL import Image
 '''
 CALL:
 python3 eval.py --run_name 000033 --path_pred ../runs/1/000033/inference --path_out ../runs/1/000033/ --path_gt ../data/test/mask --name xxx --thr xx
+
+
+
+
+python3 eval_thr.py --run_name 000033 --path_pred  /mnt/c/Users/haddo/SS_Halimeda/cat/000033/inference_test/\
+      --path_out /mnt/c/Users/haddo/SS_Halimeda/cat/metrics_cat/ --path_gt /mnt/c/Users/haddo/SS_Halimeda/cat/test_ss/mask/ \
+        --name miki_SS_over_SS --thr 123
+
+python eval_one_thr.py --run_name best_SS_over_SS_test_cat  --pred_path /mnt/c/Users/haddo/SS_Halimeda/cat/000033/inference_test/ \
+                                                    --out_path /mnt/c/Users/haddo/SS_Halimeda/cat/metrics_cat/ --thr 123  \
+                                                    --gt_path /mnt/c/Users/haddo/SS_Halimeda/cat/test_ss/mask/ --shape 1024 
+
+
 '''
 
 
