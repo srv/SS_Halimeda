@@ -58,7 +58,7 @@ confMatrix=np.zeros((2,2))
 preds = list()
 gts = list()
 
-print("evaluating: " + path_out)
+print("evaluating: " + name)
 
 for i in range(len(pred_list)):
 
@@ -67,13 +67,17 @@ for i in range(len(pred_list)):
 
     pred = cv2.imread(pred_file,2)
     gt = cv2.imread(gt_file,2)
-
+    
+    dim = (1024, 1024)
+ 
+    pred = cv2.resize(pred, dim, interpolation = cv2.INTER_AREA)
+    gt = cv2.resize(gt, dim, interpolation = cv2.INTER_AREA)
+    
     preds.append(pred)
     gts.append(gt)
 
 preds_flat = list()
 gts_flat = list()
-
 
 for i in range(len(pred_list)): 
 
@@ -85,12 +89,13 @@ for i in range(len(pred_list)):
     
     preds_flat.append(pred_flat)
     gts_flat.append(gt_flat)
-
+    
 preds_flat_concat = np.hstack(preds_flat)
 gts_flat_concat = np.hstack(gts_flat)
 
 preds_flat_concat = preds_flat_concat/255
 gts_flat_concat = gts_flat_concat/255
+
 
 gts_flat_concat = np.where(gts_flat_concat>0.5, 1, 0)
 preds_flat_concat_bw =  np.where(preds_flat_concat>thr2, 1, 0)
