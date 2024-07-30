@@ -39,32 +39,24 @@ except:
 TEST_PATH = data_path
 
 test_list = sorted(os.listdir(TEST_PATH))
-
-X_test = np.zeros((len(test_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-print('Loading test images') 
+model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
+X_test = np.zeros((1, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
 for n, id_ in enumerate(test_list):
+    # Image load
     path = os.path.join(TEST_PATH, id_)
     img = imread(path)[:,:,:IMG_CHANNELS]
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-    X_test[n] = img
+    X_test[0] = img
 
-# device = cuda.get_current_device()
-# device.reset()
-model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
+    # Image inference
+    preds_test = model.predict(X_test, verbose=1)
 
-print("Starting inference")
-preds_test = model.predict(X_test, verbose=1)
-print("INFERENCE DONE")
-
-
-for idx, name in enumerate(test_list):
-
-    base, ext = os.path.splitext(name)
-    #imsave(os.path.join(save_path, name), np.squeeze(X_test[idx]))
-    img = np.squeeze(preds_test[idx])
+    # Infered image saving
+    base, ext = os.path.splitext(id_)
+    img = np.squeeze(preds_test[0])
     if shape_out != 0:
         img = resize(img, (shape_out, shape_out), mode='constant', preserve_range=True)
 
-
+    img = (img * 255).astype(np.uint8)
     imsave(os.path.join(save_path, base + "_grey" + ext), img)
 
