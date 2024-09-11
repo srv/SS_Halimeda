@@ -21,23 +21,26 @@ python imgs_to_0_255.py --in_path /mnt/c/Users/haddo/Halimeda/merged_model_0/val
 parser = argparse.ArgumentParser()
 parser.add_argument('--in_path', help='Path to the run folder', type=str)
 parser.add_argument('--sp', help='save_path', type=str)
-parser.add_argument('--shape', help='img_shape', type=int)
+# parser.add_argument('--shape', help='img_shape', type=int)
 parsed_args = parser.parse_args()
 
 in_path = parsed_args.in_path
 sp = parsed_args.sp
-shape = parsed_args.shape
+# shape = parsed_args.shape
 
-IMG_WIDTH = shape
-IMG_HEIGHT = shape
+# IMG_WIDTH = shape
+# IMG_HEIGHT = shape
 
 grey_list = sorted(os.listdir(in_path))
 
-print("grey_list",grey_list)
+print("grey_list", grey_list)
 
-grey = np.zeros((len(grey_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
+# grey = np.zeros((len(grey_list), IMG_HEIGHT, IMG_WIDTH), dtype=np.uint8)
 for n, id_ in enumerate(grey_list):
+    id, extension = id_.split('.')
     path = os.path.join(in_path, id_)
-    img = imread(path, as_gray = True)
-    img_new = img*255
-    imsave(os.path.join(sp, id_), img_new)
+    img = imread(path)[:,:,:3]
+    print(img.shape)
+    img_new = np.zeros(img.shape, dtype=np.uint8)
+    print(img_new.shape)
+    imsave(os.path.join(sp, id+'_gt.jpg'), img_new)

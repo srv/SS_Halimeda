@@ -5,6 +5,10 @@ from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow
+from skimage.color import rgb2hsv, hsv2rgb
+from tqdm import tqdm
+from random import uniform
+from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--run_path', help='Path to the run folder', type=str)
@@ -33,10 +37,10 @@ load = os.path.exists(os.path.join(data_path, "Xtrain_"+str(shape)+".npy"))
 
 if load == False:
 
-    TRAIN_images_PATH = os.path.join(data_path, "train/img")
-    TRAIN_masks_PATH =  os.path.join(data_path, "train/mask")
-    VAL_images_PATH =   os.path.join(data_path, "val/img")
-    VAL_masks_PATH =    os.path.join(data_path, "val/mask")
+    TRAIN_images_PATH = os.path.join(data_path, "train/images")
+    TRAIN_masks_PATH =  os.path.join(data_path, "train/gt")
+    VAL_images_PATH =   os.path.join(data_path, "val/images")
+    VAL_masks_PATH =    os.path.join(data_path, "val/gt")
 
     train_images_list = sorted(os.listdir(TRAIN_images_PATH))
     train_masks_list = sorted(os.listdir(TRAIN_masks_PATH))
@@ -47,17 +51,40 @@ if load == False:
     # train images and masks
     X_train = np.zeros((len(train_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
     print('Loading train images') 
-    for n, id_ in enumerate(train_images_list):
+    for n, id_ in tqdm(enumerate(train_images_list)):
+        # input()
         path = os.path.join(TRAIN_images_PATH, id_)
-        img = imread(path)[:,:,:IMG_CHANNELS]
+        img = imread(path)[:, :, :IMG_CHANNELS]
+        x_dim, y_dim, z_dim = img.shape
+        is_downsampled = True if x_dim > shape or y_dim > shape else False
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-        X_train[n] = img
+        # Convert RGB image to HSV and colour/brightness augmentation
+        hsv_img = rgb2hsv(img)
+        # imshow(img)
+        # plt.show()
+        # print('Image: ')
+        # print('Hue max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 0]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 0]))))
+        # print('Saturation max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 1]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 1]))))
+        # print('Value max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 2]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 2]))))
+
+        value_t = uniform(0, 1.5); hue_t = uniform(0, 1.5); saturation_t = uniform(0, 1.5)
+        h_augmented = hsv_img[:, :, 0] * hue_t
+        hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
+        s_augmented = hsv_img[:, :, 1] * saturation_t
+        hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
+        v_augmented = hsv_img[:, :, 2] * value_t
+        hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
+        # imshow(hsv2rgb(hsv_img).astype(np.int64))
+        # plt.show()
+        X_train[n] = hsv2rgb(hsv_img)
     Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
-    for n, id_ in enumerate(train_masks_list):
+    for n, id_ in tqdm(enumerate(train_masks_list)):
         path = os.path.join(TRAIN_masks_PATH, id_)
-        mask = imread(path)[:,:,:1]
-        mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+        mask = imread(path)[:, :, :1]
+        x_dim, y_dim, z_dim = mask.shape
+        is_downsampled = True if x_dim > shape or y_dim > shape else False
+        mask = resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True)
         Y_train[n] = mask
     np.save(os.path.join(data_path, "Xtrain_"+str(shape)),X_train)
     np.save(os.path.join(data_path, "Ytrain_")+str(shape),Y_train)
@@ -65,20 +92,33 @@ if load == False:
     # val images and masks
     X_val = np.zeros((len(val_images_list), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
     print('Loading val images') 
-    for n, id_ in enumerate(val_images_list):
+    for n, id_ in tqdm(enumerate(val_images_list)):
         path = os.path.join(VAL_images_PATH, id_)
-        img = imread(path)[:,:,:IMG_CHANNELS]
+        img = imread(path)[:, :, :IMG_CHANNELS]
+        x_dim, y_dim, z_dim = img.shape
+        is_downsampled = True if x_dim > shape or y_dim > shape else False
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
-        X_val[n] = img
+        # Convert RGB image to HSV and colour/brightness augmentation
+        hsv_img = rgb2hsv(img)
+        value_t = uniform(0, 1.5); hue_t = uniform(0, 1.5); saturation_t = uniform(0, 1.5)
+        h_augmented = hsv_img[:, :, 0] * hue_t
+        hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
+        s_augmented = hsv_img[:, :, 1] * saturation_t
+        hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
+        v_augmented = hsv_img[:, :, 2] * value_t
+        hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
+        X_val[n] = hsv2rgb(hsv_img)
     Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
-    for n, id_ in enumerate(val_masks_list):
+    for n, id_ in tqdm(enumerate(val_masks_list)):
         path = os.path.join(VAL_masks_PATH, id_)
-        mask = imread(path)[:,:,:1]
-        mask = (resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True))
+        mask = imread(path)[:, :, :1]
+        x_dim, y_dim, z_dim = mask.shape
+        is_downsampled = True if x_dim > shape or y_dim > shape else False
+        mask = resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         Y_val[n] = mask
-    np.save(os.path.join(data_path, "Xval_"+str(shape)),X_val)
-    np.save(os.path.join(data_path, "Yval_"+str(shape)),Y_val)
+    np.save(os.path.join(data_path, "Xval_" + str(shape)), X_val)
+    np.save(os.path.join(data_path, "Yval_" + str(shape)), Y_val)
 
 if load == True:
     print('Loading numpys') 
@@ -151,15 +191,15 @@ model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=learning), loss=
 model.summary()
 
 #save checkpoints
-checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5', verbose=1, save_best_only=True) 
+checkpointer = tf.keras.callbacks.ModelCheckpoint('ckpt.h5.keras', verbose=1, save_best_only=True) 
 
-callbacks = [tf.keras.callbacks.EarlyStopping(patience=30, monitor='val_loss'), tf.keras.callbacks.TensorBoard(log_dir=run_path)]
+callbacks = [tf.keras.callbacks.EarlyStopping(patience=100, monitor='val_loss', restore_best_weights=True), tf.keras.callbacks.TensorBoard(log_dir=run_path)]
 
 print("training")
-results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=batch, epochs=300, callbacks=callbacks)
+results = model.fit(X_train, Y_train, validation_data=(X_val, Y_val), batch_size=batch, epochs=10000, callbacks=callbacks)
 
-tf.keras.models.save_model(model,os.path.join(run_path, "model.h5"))
-
+# tf.keras.models.save_model(model, os.path.join(run_path, "model.h5"))
+model.save(os.path.join(run_path, "model.keras"))
 
 
 

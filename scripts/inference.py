@@ -1,10 +1,11 @@
 import os
 import argparse
 import numpy as np
-# from numba import cuda
+from numba import cuda
 import tensorflow as tf
 from skimage.transform import resize
 from skimage.io import imread, imshow, imsave
+from tqdm import tqdm
 
 
 """
@@ -39,14 +40,18 @@ except:
 TEST_PATH = data_path
 
 test_list = sorted(os.listdir(TEST_PATH))
-model = tf.keras.models.load_model(os.path.join(run_path, "model.h5"))
+print(os.path.join(run_path, "model.keras"))
+tf.keras.config.enable_unsafe_deserialization()
+model = tf.keras.models.load_model(os.path.join(run_path, "model.keras"))
 X_test = np.zeros((1, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-for n, id_ in enumerate(test_list):
+for n, id_ in tqdm(enumerate(test_list)):
     # Image load
+    print('Loading images') 
     path = os.path.join(TEST_PATH, id_)
     img = imread(path)[:,:,:IMG_CHANNELS]
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
     X_test[0] = img
+    print('Finished loading')
 
     # Image inference
     preds_test = model.predict(X_test, verbose=1)
