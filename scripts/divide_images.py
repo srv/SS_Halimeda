@@ -53,38 +53,6 @@ for n, id_ in enumerate(images_list):
     if y_val_1 != y_val_2:
         print('yval is different: y_val_1 = ', str(y_val_1), '. y_val_2 = ', str(y_val_2))
 
-    # x_cut = 0
-    # y_cut = 0
-    # if 1500 > x_val >= 1000:
-    #     x_cut = 2
-    # elif 2000 > x_val >= 1500:
-    #     x_cut = 3
-    # elif 2500 > x_val >= 2000:
-    #     x_cut = 4
-    # elif 3000 > x_val >= 2500:
-    #     x_cut = 5
-    # elif 3500 > x_val >= 3000:
-    #     x_cut = 6
-    # elif 4000 > x_val >= 3500:
-    #     x_cut = 7
-    # elif x_val >= 4000:
-    #     x_cut = 8
-    
-    # if 1500 > y_val >= 1000:
-    #     y_cut = 2
-    # elif 2000 > y_val >= 1500:
-    #     y_cut = 3
-    # elif 2500 > y_val >= 2000:
-    #     y_cut = 4
-    # elif 3000 > y_val >= 2500:
-    #     y_cut = 5
-    # elif 3500 > y_val >= 3000:
-    #     y_cut = 6
-    # elif 4000 > y_val >= 3500:
-    #     y_cut = 7
-    # elif y_val >= 4000:
-    #     y_cut = 8
-
     x_val = x_val_1
     y_val = y_val_1
     x_cut = int(x_val / 1000) if x_val >= 2000 else 0
