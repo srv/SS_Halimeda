@@ -8,12 +8,12 @@ from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-path_in = "/home/object/SS_Halimeda/data/splits/cross2/a/train/"
-path_out = "/home/object/SS_Halimeda/data/splits/cross2/a_da/train/"
+path_in = "/home/azken/Vicent/Asparagopsis/5_fold/all_train_val/"
+path_out = "/home/azken/Vicent/Asparagopsis/5_fold/all_train_val_aug/"
 
 
-path_out_img= os.path.join(path_out + "img")
-path_out_mask= os.path.join(path_out + "mask")
+path_out_img= os.path.join(path_out + "images")
+path_out_mask= os.path.join(path_out + "gt")
 
 try:
     os.mkdir(path_out_img)
@@ -21,8 +21,8 @@ try:
 except:
     print("")
 
-path_in_img=  os.path.join(path_in + "img")
-path_in_mask= os.path.join(path_in + "mask")
+path_in_img=  os.path.join(path_in + "images")
+path_in_mask= os.path.join(path_in + "gt")
 
 for image_file in os.listdir(path_in_img):
 
@@ -30,7 +30,7 @@ for image_file in os.listdir(path_in_img):
 
     name, ext = os.path.splitext(image_file)
     img_path = os.path.join(path_in_img, image_file)
-    mask_file = os.path.join(path_in_mask, name + "_gt" + ext)
+    mask_file = os.path.join(path_in_mask, name + "_gt.png")
     
     image=load_img(img_path)
     mask=load_img(mask_file)
@@ -41,7 +41,7 @@ for image_file in os.listdir(path_in_img):
     datagen = ImageDataGenerator(rotation_range=20,width_shift_range=0.1,height_shift_range=0.1,shear_range=0.15,zoom_range=0.15,horizontal_flip=True,fill_mode='reflect')
     #datagen = ImageDataGenerator(rotation_range=50,width_shift_range=0.5,height_shift_range=0.5,shear_range=0.5,zoom_range=0.5,horizontal_flip=True,fill_mode='reflect')
     
-    a = random.randint(0, 4)	
+    a = random.randint(0, 4)
     if a < 4:
         aug_iter_img = datagen.flow(image, batch_size=1, seed=s)
         image = next(aug_iter_img)[0].astype('uint8')
@@ -55,8 +55,8 @@ for image_file in os.listdir(path_in_img):
         image = image[0,:,:,:]
         mask = mask[0,:,:,:]
 
-    save_img(os.path.join(path_out_img, name + "_da" + ext), image)
-    save_img(os.path.join(path_out_mask, name + "_da_gt" + ext), mask)
+    save_img(os.path.join(path_out_img, name + "_da.png"), image)
+    save_img(os.path.join(path_out_mask, name + "_da_gt.png"), mask)
 
 
 

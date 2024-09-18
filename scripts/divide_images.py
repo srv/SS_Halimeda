@@ -43,6 +43,9 @@ for n, id_ in enumerate(images_list):
     path = os.path.join(masks_PATH, masks_list[n])
     print(path)
     mask = imread(path)[:, :, :3]
+    print('Mask shape = ', str(mask.shape))
+    mask = (np.where(mask>127, 255, 0)).astype(np.uint8)
+    print('Mask shape = ', str(mask.shape))
 
     x_val_1, y_val_1, z_val_1 = img.shape
     # print('Img: X_val = ', str(x_val), '. Y_val = ', str(y_val), '. Z_val = ', str(z_val))
@@ -55,41 +58,41 @@ for n, id_ in enumerate(images_list):
 
     x_val = x_val_1
     y_val = y_val_1
-    x_cut = int(x_val / 1000) if x_val >= 2000 else 0
-    y_cut = int(y_val / 1000) if y_val >= 2000 else 0
+    x_cut = int(x_val / 1024) if x_val >= 2048 else 0
+    y_cut = int(y_val / 1024) if y_val >= 2048 else 0
 
     #print('X_cut = ', str(x_cut), '. Y_cut = ', str(y_cut))
     if x_cut > 0 and y_cut > 0:
         for i in range(x_cut):
             for j in range(y_cut):
-                x_upper_bound = (i+1)*1000 if i < x_cut-1 else x_val-1
-                y_upper_bound = (j+1)*1000 if j < y_cut-1 else y_val-1
-                print('Image boundaries: X = [', str(i*1000), ', ', str(x_upper_bound), ']. Y = [', str(j*1000), ', ', str(y_upper_bound), ']')
-                new_image = img[i*1000:x_upper_bound, j*1000:y_upper_bound, :3]
+                x_upper_bound = (i+1)*1024 if i < x_cut-1 else x_val-1
+                y_upper_bound = (j+1)*1024 if j < y_cut-1 else y_val-1
+                print('Image boundaries: X = [', str(i*1024), ', ', str(x_upper_bound), ']. Y = [', str(j*1024), ', ', str(y_upper_bound), ']')
+                new_image = img[i*1024:x_upper_bound, j*1024:y_upper_bound, :3]
                 imsave(os.path.join(out_images_PATH, name+'_'+str(i)+'_'+str(j)+'.'+extension), new_image)
-                new_mask = mask[i*1000:x_upper_bound, j*1000:y_upper_bound, :3]
-                imsave(os.path.join(out_masks_PATH, name+'_'+str(i)+'_'+str(j)+'_gt.jpg'), new_mask)
+                new_mask = mask[i*1024:x_upper_bound, j*1024:y_upper_bound, :3]
+                imsave(os.path.join(out_masks_PATH, name+'_'+str(i)+'_'+str(j)+'_gt.png'), new_mask)
     elif x_cut > 0:
         for i in range(x_cut):
-            x_upper_bound = (i+1)*1000 if i < x_cut-1  else x_val-1
-            new_image = img[i*1000:x_upper_bound, :, :3]
+            x_upper_bound = (i+1)*1024 if i < x_cut-1  else x_val-1
+            new_image = img[i*1024:x_upper_bound, :, :3]
             imsave(os.path.join(out_images_PATH, name+'_'+str(i)+'.'+extension), new_image)
-            new_mask = mask[i*1000:x_upper_bound, :, :3]
-            imsave(os.path.join(out_masks_PATH, name+'_'+str(i)+'_gt.jpg'), new_mask)
+            new_mask = mask[i*1024:x_upper_bound, :, :3]
+            imsave(os.path.join(out_masks_PATH, name+'_'+str(i)+'_gt.png'), new_mask)
     elif y_cut > 0:
         for j in range(y_cut):
-            y_upper_bound = (j+1)*1000 if j < y_cut-1 else y_val-1
-            new_image = img[:, j*1000:y_upper_bound, :3]
+            y_upper_bound = (j+1)*1024 if j < y_cut-1 else y_val-1
+            new_image = img[:, j*1024:y_upper_bound, :3]
             imsave(os.path.join(out_images_PATH, name+'_'+str(j)+'.'+extension), new_image)
-            new_mask = mask[:, j*1000:y_upper_bound, :3]
-            imsave(os.path.join(out_masks_PATH, name+'_'+str(j)+'_gt.jpg'), new_mask)
+            new_mask = mask[:, j*1024:y_upper_bound, :3]
+            imsave(os.path.join(out_masks_PATH, name+'_'+str(j)+'_gt.png'), new_mask)
     else:
         try:
             new_image = img
             #print('Forth case: ' + str(new_image.shape))
             imsave(os.path.join(out_images_PATH, id_), new_image)
             new_mask = mask
-            imsave(os.path.join(out_masks_PATH, name+'_gt.jpg'), new_mask)
+            imsave(os.path.join(out_masks_PATH, name+'_gt.png'), new_mask)
         except Exception as e:
             print('Fourth case: ' + str(e))
         

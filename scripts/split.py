@@ -3,26 +3,26 @@ import random
 import shutil
 from natsort import natsorted
 
-path_in="/home/tintin/SS_Halimeda/data/1024_1024"
-images_PATH = os.path.join(path_in,"img")
-masks_PATH = os.path.join(path_in,"mask")
+path_in = "/home/azken/Vicent/Asparagopsis/all/divided_good/all/"
+images_PATH = os.path.join(path_in,"images")
+masks_PATH = os.path.join(path_in,"gt")
 
-path_out="/home/tintin/SS_Halimeda/data/splits/base"
-TRAIN_images_PATH = os.path.join(path_out,"train/img")
-TRAIN_masks_PATH = os.path.join(path_out,"train/mask")
-VAL_images_PATH = os.path.join(path_out,"val/img")
-VAL_masks_PATH = os.path.join(path_out,"val/mask")
-TEST_images_PATH = os.path.join(path_out,"test/img")
-TEST_masks_PATH = os.path.join(path_out,"test/mask")
+path_out = "/home/azken/Vicent/Asparagopsis/5_fold/"
+TRAIN_images_PATH = os.path.join(path_out, "train/images")
+TRAIN_masks_PATH = os.path.join(path_out, "train/gt")
+VAL_images_PATH = os.path.join(path_out, "val/images")
+VAL_masks_PATH = os.path.join(path_out, "val/gt")
+TEST_images_PATH = os.path.join(path_out, "test/images")
+TEST_masks_PATH = os.path.join(path_out, "test/gt")
 
 n_img = len(os.listdir(images_PATH))
 
-val_split = 0.1
+val_split = 0
 test_split = 0.1
 
 n_val = int(n_img * val_split)
 n_test = int(n_img * test_split)
-n_train = n_img-n_val-n_test
+n_train = n_img - n_val - n_test
 
 random_idx = random.sample(range(n_img), (n_img))
 

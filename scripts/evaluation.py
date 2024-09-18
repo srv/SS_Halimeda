@@ -50,6 +50,7 @@ for n, id_ in enumerate(gt_list):
     # img = imread(path, as_gray = True)
     img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+    img = np.where(img > 127, 255, 0)
     gt[n] = img
 
 grey_flat = grey.flatten()

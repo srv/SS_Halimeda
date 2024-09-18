@@ -56,35 +56,31 @@ if load == False:
         path = os.path.join(TRAIN_images_PATH, id_)
         img = imread(path)[:, :, :IMG_CHANNELS]
         x_dim, y_dim, z_dim = img.shape
-        is_downsampled = True if x_dim > shape or y_dim > shape else False
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         # Convert RGB image to HSV and colour/brightness augmentation
-        hsv_img = rgb2hsv(img)
-        # imshow(img)
-        # plt.show()
-        # print('Image: ')
-        # print('Hue max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 0]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 0]))))
-        # print('Saturation max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 1]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 1]))))
-        # print('Value max = ', str(max(np.ndarray.flatten(hsv_img[:, :, 2]))), '. Min = ', str(min(np.ndarray.flatten(hsv_img[:, :, 2]))))
+        # hsv_img = rgb2hsv(img)
+        # # imshow(img)
+        # # plt.show()
 
-        value_t = uniform(0, 1.5); hue_t = uniform(0, 1.5); saturation_t = uniform(0, 1.5)
-        h_augmented = hsv_img[:, :, 0] * hue_t
-        hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
-        s_augmented = hsv_img[:, :, 1] * saturation_t
-        hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
-        v_augmented = hsv_img[:, :, 2] * value_t
-        hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
-        # imshow(hsv2rgb(hsv_img).astype(np.int64))
-        # plt.show()
-        X_train[n] = hsv2rgb(hsv_img)
+        # value_t = uniform(0.5, 1.5); hue_t = uniform(0.5, 1.5); saturation_t = uniform(0.5, 1.5)
+        # h_augmented = hsv_img[:, :, 0] * hue_t
+        # hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
+        # s_augmented = hsv_img[:, :, 1] * saturation_t
+        # hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
+        # v_augmented = hsv_img[:, :, 2] * value_t
+        # hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
+        # # imshow(hsv2rgb(hsv_img).astype(np.int64))
+        # # plt.show()
+        # X_train[n] = hsv2rgb(hsv_img)
+        X_train[n] = img
     Y_train = np.zeros((len(train_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
     for n, id_ in tqdm(enumerate(train_masks_list)):
         path = os.path.join(TRAIN_masks_PATH, id_)
         mask = imread(path)[:, :, :1]
         x_dim, y_dim, z_dim = mask.shape
-        is_downsampled = True if x_dim > shape or y_dim > shape else False
         mask = resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant',preserve_range=True)
+        mask = np.where(mask > 127, 255, 0)
         Y_train[n] = mask
     np.save(os.path.join(data_path, "Xtrain_"+str(shape)),X_train)
     np.save(os.path.join(data_path, "Ytrain_")+str(shape),Y_train)
@@ -96,26 +92,26 @@ if load == False:
         path = os.path.join(VAL_images_PATH, id_)
         img = imread(path)[:, :, :IMG_CHANNELS]
         x_dim, y_dim, z_dim = img.shape
-        is_downsampled = True if x_dim > shape or y_dim > shape else False
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
         # Convert RGB image to HSV and colour/brightness augmentation
-        hsv_img = rgb2hsv(img)
-        value_t = uniform(0, 1.5); hue_t = uniform(0, 1.5); saturation_t = uniform(0, 1.5)
-        h_augmented = hsv_img[:, :, 0] * hue_t
-        hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
-        s_augmented = hsv_img[:, :, 1] * saturation_t
-        hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
-        v_augmented = hsv_img[:, :, 2] * value_t
-        hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
-        X_val[n] = hsv2rgb(hsv_img)
+        # hsv_img = rgb2hsv(img)
+        # value_t = uniform(0.5, 1.5); hue_t = uniform(0.5, 1.5); saturation_t = uniform(0.5, 1.5)
+        # h_augmented = hsv_img[:, :, 0] * hue_t
+        # hsv_img[:, :, 0] = np.where(h_augmented <= 1, h_augmented, h_augmented - 1)
+        # s_augmented = hsv_img[:, :, 1] * saturation_t
+        # hsv_img[:, :, 1] = np.where(s_augmented <= 1, s_augmented, 1)
+        # v_augmented = hsv_img[:, :, 2] * value_t
+        # hsv_img[:, :, 2] = np.where(v_augmented <= 255, v_augmented, 255)
+        # X_val[n] = hsv2rgb(hsv_img)
+        X_val[n] = img
     Y_val = np.zeros((len(val_masks_list), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool_)
     print('Loading masks images') 
     for n, id_ in tqdm(enumerate(val_masks_list)):
         path = os.path.join(VAL_masks_PATH, id_)
         mask = imread(path)[:, :, :1]
         x_dim, y_dim, z_dim = mask.shape
-        is_downsampled = True if x_dim > shape or y_dim > shape else False
         mask = resize(mask, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
+        mask = np.where(mask > 127, 255, 0)
         Y_val[n] = mask
     np.save(os.path.join(data_path, "Xval_" + str(shape)), X_val)
     np.save(os.path.join(data_path, "Yval_" + str(shape)), Y_val)
